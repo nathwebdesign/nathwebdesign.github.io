@@ -252,7 +252,7 @@ footer::before {
     margin-bottom: 20px;
     background-color: rgba(15, 15, 15, 0.9);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(5px);
@@ -261,6 +261,18 @@ footer::before {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    will-change: transform, box-shadow, border-color;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: subpixel-antialiased;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    cursor: pointer; /* Indique que la carte est interactive */
+    isolation: isolate; /* Crée un nouveau contexte d'empilement */
+    
+    /* Augmenter le padding pour éviter que la zone active soit trop près du bord */
+    padding: 25px 25px 30px 25px;
+    margin: 5px;
 }
 
 .product-card::before {
@@ -297,14 +309,38 @@ footer::before {
     z-index: 2;
 }
 
+/* Limiter le hover au product-card lui-même, pas ses enfants */
+.product-card * {
+    pointer-events: none;
+}
+
+/* Mais permettre les clics sur les boutons */
+.product-card .btn-view-details {
+    pointer-events: auto;
+}
+
 .product-card:hover::before {
     transform: scaleX(1);
-    transition: transform 0.3s ease;
+    transition: transform 0.2s ease-out;
 }
 
 .product-card:hover::after {
     opacity: 1;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease-out;
+}
+
+@media (hover: hover) {
+    /* Ces styles ne s'appliquent que sur les appareils avec hover (principalement desktop) */
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+}
+
+@media (hover: none) {
+    /* Ces styles s'appliquent sur les appareils tactiles sans hover */
+    .product-card:active {
+        border-color: var(--orange);
+    }
 }
 
 .product-card ul {
@@ -354,13 +390,24 @@ footer::before {
     position: relative;
     display: inline-block;
     text-shadow: 0 0 8px rgba(255, 140, 0, 0.3);
-    transition: all 0.4s ease;
+    transition: all 0.2s ease-out;
 }
 
 .product-card:hover h3 {
     text-shadow: 0 0 12px rgba(255, 140, 0, 0.5);
     letter-spacing: 2px;
     color: #FFA500;
+}
+
+/* Appliquer des transitions hardware-accelerated pour plus de fluidité */
+.product-card h3, 
+.product-card img, 
+.btn-view-details, 
+.card-icon {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .product-card h3::before {
@@ -646,6 +693,7 @@ footer::before {
     gap: 40px;
     perspective: 1000px;
     padding: 20px 10px;
+    isolation: isolate; /* Crée un nouveau contexte d'empilement pour éviter les chevauchements */
 }
 
 /* Décalage des cartes pour effet 3D */
@@ -688,16 +736,104 @@ footer::before {
 @media (max-width: 768px) {
     .product-grid {
         grid-template-columns: 1fr;
+        gap: 25px;
+        padding: 5px;
     }
 
     /* Ajustements pour mobile */
     .product-card {
-        padding: 15px;
+        padding: 20px 15px;
+        min-height: auto;
+        margin-bottom: 0;
+        transform: none !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        transition: none;
+    }
+    
+    .product-card:hover {
+        transform: none !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 140, 0, 0.2);
+        animation: none;
+    }
+    
+    .card-icon {
+        font-size: 2em;
+    }
+    
+    .product-card h3 {
+        font-size: 1.4em;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+    
+    .product-card:hover h3 {
+        letter-spacing: 1px;
+        transform: none;
+    }
+    
+    .card-summary {
+        height: auto;
+        max-height: 100px;
+        font-size: 0.9em !important;
+        overflow-y: auto;
+    }
+    
+    .btn-view-details {
+        width: 100%;
+        margin-top: 15px;
+        padding: 12px 15px;
     }
     
     section {
-        padding: 20px;
-        margin-bottom: 40px;
+        padding: 20px 15px;
+        margin-bottom: 30px;
+    }
+    
+    .welcome-banner {
+        padding: 40px 15px;
+    }
+    
+    .welcome-banner h2 {
+        font-size: 1.8em;
+    }
+    
+    .welcome-banner p {
+        font-size: 1em;
+    }
+    
+    /* Ajustements modales pour mobile */
+    .product-modal-content {
+        width: 95%;
+        padding: 20px 15px;
+        max-height: 95vh;
+    }
+    
+    .modal-product-details h3 {
+        font-size: 1.5em;
+    }
+    
+    .modal-product-details ul,
+    .modal-product-details .price-table,
+    .modal-product-details .price-highlight,
+    .modal-product-details .platforms {
+        width: 100%;
+    }
+    
+    .modal-product-details .price-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.95em;
+    }
+    
+    .modal-close-btn {
+        top: 10px;
+        right: 10px;
+    }
+    
+    .modal-action-btn {
+        width: 100%;
+        font-size: 1em;
+        padding: 12px 20px;
     }
 }
 
