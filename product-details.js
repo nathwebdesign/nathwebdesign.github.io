@@ -5,10 +5,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Gérer l'ouverture des pages produits en plein écran
     setupModalSystem();
     
-    // Ajouter les écouteurs d'événements pour les boutons
+    // Ajouter les écouteurs d'événements pour les boutons et cartes
     document.body.addEventListener('click', function(e) {
         // Vérifier si l'élément cliqué est un bouton "Voir les détails"
         if (e.target.classList.contains('btn-view-details')) {
+            e.stopPropagation(); // Empêcher l'événement de remonter à la carte
+            const productId = e.target.getAttribute('data-product-id');
+            showProductDetails(productId);
+        }
+        
+        // Vérifier si l'élément cliqué est une carte de produit (mais pas un bouton)
+        if (e.target.classList.contains('product-card')) {
             const productId = e.target.getAttribute('data-product-id');
             showProductDetails(productId);
         }
