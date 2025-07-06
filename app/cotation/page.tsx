@@ -30,6 +30,7 @@ export default function CotationPage() {
     longueur: '',
     largeur: '',
     hauteur: '',
+    nombrePalettes: '',  // Nouveau champ pour le nombre de palettes
     // Options (automatisées ou manuelles)
     hayon: false,  // Sera automatique si hauteur > 120cm ou poids > 1000kg
     matieresDangereuses: false,  // Reste manuel pour la sécurité
@@ -166,7 +167,8 @@ export default function CotationPage() {
       postalCodeDestination: codePostal,
       weight,
       dimensions,
-      options
+      options,
+      nombrePalettes: formData.nombrePalettes ? parseInt(formData.nombrePalettes) : undefined
     })
 
     if (!cotation.success) {
@@ -227,7 +229,7 @@ export default function CotationPage() {
                       checked={typeTransport === 'depuis-pole'}
                       onChange={(e) => {
                         setTypeTransport(e.target.value as 'depuis-pole' | 'vers-pole')
-                        setFormData(prev => ({...prev, villeDepart: '', villeArrivee: '', codePostalDestination: '', poleSelectionne: '', poleArriveeSelectionne: ''}))
+                        setFormData(prev => ({...prev, villeDepart: '', villeArrivee: '', codePostalDestination: '', poleSelectionne: '', poleArriveeSelectionne: '', nombrePalettes: ''}))
                         setCoordinates({})
                       }}
                       className="mr-2"
@@ -242,7 +244,7 @@ export default function CotationPage() {
                       checked={typeTransport === 'vers-pole'}
                       onChange={(e) => {
                         setTypeTransport(e.target.value as 'depuis-pole' | 'vers-pole')
-                        setFormData(prev => ({...prev, villeDepart: '', villeArrivee: '', codePostalDestination: '', poleSelectionne: '', poleArriveeSelectionne: ''}))
+                        setFormData(prev => ({...prev, villeDepart: '', villeArrivee: '', codePostalDestination: '', poleSelectionne: '', poleArriveeSelectionne: '', nombrePalettes: ''}))
                         setCoordinates({})
                       }}
                       className="mr-2"
@@ -372,22 +374,41 @@ export default function CotationPage() {
                 </h3>
                 
                 <div className="space-y-4">
-                  <div>
-                    <label htmlFor="poids" className="block text-sm font-medium text-gray-700 mb-2">
-                      Poids total (kg)
-                    </label>
-                    <input
-                      type="number"
-                      id="poids"
-                      name="poids"
-                      value={formData.poids}
-                      onChange={handleInputChange}
-                      min="0.1"
-                      step="0.1"
-                      placeholder="Ex: 500"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                      required
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="poids" className="block text-sm font-medium text-gray-700 mb-2">
+                        Poids total (kg)
+                      </label>
+                      <input
+                        type="number"
+                        id="poids"
+                        name="poids"
+                        value={formData.poids}
+                        onChange={handleInputChange}
+                        min="0.1"
+                        step="0.1"
+                        placeholder="Ex: 500"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="nombrePalettes" className="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre de palettes (optionnel)
+                      </label>
+                      <input
+                        type="number"
+                        id="nombrePalettes"
+                        name="nombrePalettes"
+                        value={formData.nombrePalettes}
+                        onChange={handleInputChange}
+                        min="0"
+                        step="1"
+                        placeholder="Ex: 2"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
                   </div>
 
                   <div>
