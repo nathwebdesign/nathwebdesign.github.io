@@ -86,10 +86,7 @@ export function calculateCotation(input: CotationInput): CotationResult {
       return calculateExpressRPCotation(input, departurePostalCode);
     }
     
-    // 1. Toujours traiter comme palette/affrètement (pas de détection automatique messagerie)
-    const poidsVolumetrique = calculateVolumetricWeight(input.dimensions);
-    
-    // 2. Déterminer la zone de destination selon le pôle
+    // 1. Déterminer la zone de destination selon le pôle
     const zone = getZoneByPostalCodeAndPole(input.postalCodeDestination, poleIdFormatted);
     if (!zone) {
       return {
@@ -103,7 +100,7 @@ export function calculateCotation(input: CotationInput): CotationResult {
     let weightForCalculation: number = input.weight;
     let calculAffrètement: any = undefined;
 
-    // 3. Toujours traiter comme palette/affrètement
+    // 2. Toujours traiter comme palette/affrètement
     const estimation = estimatePalettes(input.dimensions, input.weight);
     
     // Si nombre de palettes fourni par l'utilisateur, l'utiliser
@@ -194,7 +191,7 @@ export function calculateCotation(input: CotationInput): CotationResult {
       }
     }
 
-    // 4. Calculer le tarif de base selon le pôle
+    // 3. Calculer le tarif de base selon le pôle
     const basePrice = calculateTarifByPole(
       poleIdFormatted, 
       zone.code, 
@@ -209,10 +206,10 @@ export function calculateCotation(input: CotationInput): CotationResult {
       };
     }
 
-    // 5. Calculer le prix total avec options
+    // 4. Calculer le prix total avec options
     const pricing = calculateTotalPrice(basePrice, input.options, poleIdFormatted);
 
-    // 6. Déterminer le délai de livraison
+    // 5. Déterminer le délai de livraison
     let delaiLivraison = '24-48h';
     if (zone.code === 'CORSE') {
       delaiLivraison = '48-72h';
@@ -220,7 +217,7 @@ export function calculateCotation(input: CotationInput): CotationResult {
       delaiLivraison = '48h';
     }
 
-    // 7. Conditions spéciales
+    // 6. Conditions spéciales
     const conditionsSpeciales: string[] = [];
     if (input.options.matieresDangereuses) {
       conditionsSpeciales.push('Transport de matières dangereuses soumis à réglementation ADR');
