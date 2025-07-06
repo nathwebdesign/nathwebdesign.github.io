@@ -328,7 +328,7 @@ export function estimatePalettes(dimensions: { longueur: number; largeur: number
   const isPalette80x120 = (longueurM === 0.8 && largeurM === 1.2) || (longueurM === 1.2 && largeurM === 0.8);
   const isPalette100x120 = (longueurM === 1.0 && largeurM === 1.2) || (longueurM === 1.2 && largeurM === 1.0);
   
-  // Si ce n'est pas une palette standard, utiliser le poids volumétrique
+  // Si ce n'est pas une palette standard, TOUJOURS utiliser la formule d'affrètement
   if (!isPalette80x120 && !isPalette100x120) {
     // Calcul du poids volumétrique : L × l × h × 250
     const volumeM3 = longueurM * largeurM * hauteurM;
@@ -337,42 +337,27 @@ export function estimatePalettes(dimensions: { longueur: number; largeur: number
     // Utiliser le plus grand entre poids réel et poids volumétrique
     const poidsFacture = Math.max(poids, poidsVolumetrique);
     
-    // Estimer le nombre de palettes basé sur le poids facturé
-    const poidsMaxPalette = 750; // kg par palette
-    const nombrePalettes = Math.ceil(poidsFacture / poidsMaxPalette);
+    // Pour les dimensions non standard, toujours utiliser la formule d'affrètement
+    // Formule d'affrètement : longueur × largeur ÷ 2.4
+    const metresAffretes = (longueurM * largeurM) / 2.4;
     
-    // Si le nombre de palettes est trop élevé, passer en mètre plancher
-    if (nombrePalettes > 5) {
-      // Formule d'affrètement : longueur × largeur ÷ 2.4
-      const metresAffretes = (longueurM * largeurM) / 2.4;
-      
-      // Arrondir au palier supérieur de la grille
-      const paliers = [0.5, 1, 1.2, 1.5, 2, 2.4, 2.8, 3, 3.6, 4, 4.4, 4.8, 5.2, 5.5, 6, 6.4, 6.8, 7.2, 7.6, 8, 8.4, 8.8, 9.2, 9.6, 10, 10.4, 10.8, 11.2, 13.2];
-      const metrePlancher = paliers.find(p => p >= metresAffretes) || 13.2;
-      
-      return {
-        nombre: metrePlancher,
-        type: 'metrePlancher',
-        baseSur: 'affrètement',
-        calculAffrètement: {
-          longueur: longueurM,
-          largeur: largeurM,
-          metresCalcules: metresAffretes,
-          metresFactures: metrePlancher,
-          poidsVolumetrique: poidsVolumetrique,
-          poidsFacture: poidsFacture
-        }
-      };
-    } else {
-      // Retourner en palette 80x120 par défaut avec le poids volumétrique
-      return {
-        nombre: nombrePalettes,
-        type: 'palette80x120',
-        baseSur: 'poids volumétrique',
+    // Arrondir au palier supérieur de la grille
+    const paliers = [0.5, 1, 1.2, 1.5, 2, 2.4, 2.8, 3, 3.6, 4, 4.4, 4.8, 5.2, 5.5, 6, 6.4, 6.8, 7.2, 7.6, 8, 8.4, 8.8, 9.2, 9.6, 10, 10.4, 10.8, 11.2, 13.2];
+    const metrePlancher = paliers.find(p => p >= metresAffretes) || 13.2;
+    
+    return {
+      nombre: metrePlancher,
+      type: 'metrePlancher',
+      baseSur: 'affrètement (dimensions non standard)',
+      calculAffrètement: {
+        longueur: longueurM,
+        largeur: largeurM,
+        metresCalcules: metresAffretes,
+        metresFactures: metrePlancher,
         poidsVolumetrique: poidsVolumetrique,
         poidsFacture: poidsFacture
-      };
-    }
+      }
+    };
   }
   
   // Pour les palettes standard, garder l'ancien calcul
