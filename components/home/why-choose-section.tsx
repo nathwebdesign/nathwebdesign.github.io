@@ -5,8 +5,10 @@ import { Shield, Clock, Users, Zap } from "lucide-react"
 
 export default function WhyChooseSection() {
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white py-16 sm:py-24">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+    <div className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white py-16 sm:py-24">
+      <div className="absolute inset-0 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.indigo.100),white)] opacity-20" />
+      <div className="absolute inset-y-0 right-1/2 -z-10 mr-16 w-[200%] origin-bottom-left skew-x-[-30deg] bg-white shadow-xl shadow-indigo-600/10 ring-1 ring-indigo-50 sm:mr-28 lg:mr-0 xl:mr-16 xl:origin-center" />
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 relative">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
