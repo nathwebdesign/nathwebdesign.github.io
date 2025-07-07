@@ -10,7 +10,7 @@ import { motion } from "framer-motion"
 const navigation = [
   { name: "Accueil", href: "/" },
   { name: "Services", href: "/services" },
-  { name: "Présentation", href: "/about" },
+  { name: "À propos", href: "/about" },
   { name: "Contact", href: "/contact" },
 ]
 

@@ -56,8 +56,8 @@ export default function ContactPage() {
                   <Phone className="h-6 w-6 text-primary" aria-hidden="true" />
                 </dt>
                 <dd className="text-gray-600">
-                  <a href="tel:+33148170444" className="hover:text-primary">
-                    +33 1 48 17 04 44
+                  <a href="tel:+33148163514" className="hover:text-primary">
+                    +33 1 48 16 35 14
                   </a>
                 </dd>
               </div>
