@@ -2,10 +2,11 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { MapPin, Package, Calculator, FileText, Download, Printer, Truck, AlertCircle, Euro, Shield, Clock as ClockIcon } from "lucide-react"
+import { MapPin, Package, Calculator, FileText, Download, Printer, Truck, AlertCircle, Euro, Shield, Clock as ClockIcon, Plus, Trash2, Box } from "lucide-react"
 import dynamic from "next/dynamic"
 import { calculateCotation, estimatePalettes, calculateVolumetricWeight, determineTransportType } from "@/lib/cotation-calculator"
 import { getDepartmentFromPostalCode } from "@/config/zones"
+import { calculateTotalPrice } from "@/config/tarifs-manager"
 
 const Map = dynamic(() => import("@/components/cotation/map"), { ssr: false })
 const AddressAutocomplete = dynamic(() => import("@/components/cotation/address-autocomplete-free"), { ssr: false })
@@ -20,17 +21,22 @@ const poles: Record<string, [number, number]> = {
 export default function CotationPage() {
   const [typeTransport, setTypeTransport] = useState<'depuis-pole' | 'vers-pole'>('depuis-pole')
   
+  const [articles, setArticles] = useState([{
+    id: 1,
+    type: 'palette',  // palette, cartons, tubes
+    poids: '',
+    longueur: '',
+    largeur: '',
+    hauteur: '',
+    nombrePalettes: ''
+  }])
+
   const [formData, setFormData] = useState({
     villeDepart: '',
     villeArrivee: '',
     poleSelectionne: '',  // Pour stocker le pôle sélectionné en mode depuis-pole
     poleArriveeSelectionne: '',  // Pour stocker le pôle sélectionné en mode vers-pole
     codePostalDestination: '',
-    poids: '',
-    longueur: '',
-    largeur: '',
-    hauteur: '',
-    nombrePalettes: '',  // Nouveau champ pour le nombre de palettes
     // Options (automatisées ou manuelles)
     hayon: false,  // Sera automatique si hauteur > 120cm ou poids > 1000kg
     matieresDangereuses: false,  // Reste manuel pour la sécurité
@@ -46,6 +52,31 @@ export default function CotationPage() {
   const [error, setError] = useState<string>('')
   const [showResult, setShowResult] = useState(false)
 
+  const addArticle = () => {
+    const newId = Math.max(...articles.map(a => a.id)) + 1
+    setArticles([...articles, {
+      id: newId,
+      type: 'palette',
+      poids: '',
+      longueur: '',
+      largeur: '',
+      hauteur: '',
+      nombrePalettes: ''
+    }])
+  }
+
+  const removeArticle = (id: number) => {
+    if (articles.length > 1) {
+      setArticles(articles.filter(a => a.id !== id))
+    }
+  }
+
+  const handleArticleChange = (id: number, field: string, value: string) => {
+    setArticles(articles.map(article => 
+      article.id === id ? { ...article, [field]: value } : article
+    ))
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     
@@ -60,19 +91,6 @@ export default function CotationPage() {
         ...prev,
         [name]: value
       }))
-      
-      // Automatisation du hayon en fonction de la hauteur ou du poids
-      if (name === 'hauteur') {
-        const hauteurCm = parseFloat(value) || 0
-        if (hauteurCm > 120) {
-          setFormData(prev => ({ ...prev, hayon: true }))
-        }
-      } else if (name === 'poids') {
-        const poidsKg = parseFloat(value) || 0
-        if (poidsKg > 1000) {
-          setFormData(prev => ({ ...prev, hayon: true }))
-        }
-      }
     }
     
     // Si on sélectionne un pôle, mettre à jour les coordonnées et le pôle sélectionné
@@ -111,6 +129,13 @@ export default function CotationPage() {
     e.preventDefault()
     setError('')
     
+    // Vérifier qu'au moins un article a des dimensions
+    const hasValidArticle = articles.some(a => a.poids && a.longueur && a.largeur && a.hauteur)
+    if (!hasValidArticle) {
+      setError('Veuillez remplir au moins un article avec ses dimensions et poids')
+      return
+    }
+    
     // Déterminer le pôle sélectionné selon le mode de transport
     const poleSelected = typeTransport === 'depuis-pole' ? formData.poleSelectionne || formData.villeDepart : formData.poleArriveeSelectionne || formData.villeArrivee
     
@@ -140,46 +165,86 @@ export default function CotationPage() {
       return
     }
 
-    // Préparer les dimensions
-    const dimensions = {
-      longueur: parseFloat(formData.longueur) || 0,
-      largeur: parseFloat(formData.largeur) || 0,
-      hauteur: parseFloat(formData.hauteur) || 0
-    }
-    const weight = parseFloat(formData.poids) || 0
+    // Calculer le total pour tous les articles
+    let poidsTotal = 0
+    let resultatsArticles: any[] = []
+    let hayonNecessaire = false
 
-    // Déterminer automatiquement le hayon si nécessaire
-    const hauteurCm = parseFloat(formData.hauteur) || 0
-    const poidsKg = parseFloat(formData.poids) || 0
-    const hayonAutomatique = hauteurCm > 120 || poidsKg > 1000
-    
-    // Préparer les options (attente retirée, hayon et assurance automatiques)
-    const options = {
-      hayon: hayonAutomatique || formData.hayon,
-      attente: 0,  // Frais d'attente retirés
-      matieresDangereuses: formData.matieresDangereuses,
-      valeurMarchandise: 0  // Valeur par défaut
-    }
+    articles.forEach((article, index) => {
+      if (article.poids && article.longueur && article.largeur && article.hauteur) {
+        const dimensions = {
+          longueur: parseFloat(article.longueur) || 0,
+          largeur: parseFloat(article.largeur) || 0,
+          hauteur: parseFloat(article.hauteur) || 0
+        }
+        const weight = parseFloat(article.poids) || 0
+        poidsTotal += weight
 
-    // Calculer la cotation avec sélection automatique du type de transport
-    const cotation = calculateCotation({
-      poleId,
-      postalCodeDestination: codePostal,
-      weight,
-      dimensions,
-      options,
-      nombrePalettes: formData.nombrePalettes ? parseInt(formData.nombrePalettes) : undefined
+        // Vérifier si hayon nécessaire
+        if (dimensions.hauteur > 120 || weight > 1000) {
+          hayonNecessaire = true
+        }
+
+        // Calculer la cotation pour cet article
+        const options = {
+          hayon: false, // On appliquera le hayon sur le total
+          attente: 0,
+          matieresDangereuses: false, // On appliquera sur le total
+          valeurMarchandise: 0
+        }
+
+        const cotation = calculateCotation({
+          poleId,
+          postalCodeDestination: codePostal,
+          weight,
+          dimensions,
+          options,
+          nombrePalettes: article.nombrePalettes ? parseInt(article.nombrePalettes) : undefined
+        })
+
+        if (cotation.success && cotation.data) {
+          resultatsArticles.push({
+            ...cotation.data,
+            article: {
+              id: article.id,
+              type: article.type,
+              numero: index + 1
+            }
+          })
+        }
+      }
     })
 
-    if (!cotation.success) {
-      setError(cotation.error || 'Erreur lors du calcul')
+    if (resultatsArticles.length === 0) {
+      setError('Aucun article valide pour le calcul')
       return
     }
 
+    // Calculer le prix total
+    const prixTotalBase = resultatsArticles.reduce((sum, r) => sum + r.pricing.basePrice, 0)
+    
+    // Appliquer les options sur le total
+    const options = {
+      hayon: hayonNecessaire || formData.hayon,
+      attente: 0,
+      matieresDangereuses: formData.matieresDangereuses,
+      valeurMarchandise: 0
+    }
+
+    // Calculer le prix total avec options
+    const pricing = calculateTotalPrice(prixTotalBase, options, poleId)
+
     setResultat({
-      ...cotation.data,
+      articles: resultatsArticles,
+      pricing,
+      transport: {
+        weight: poidsTotal,
+        nombreArticles: resultatsArticles.length
+      },
+      zone: resultatsArticles[0].zone,
+      details: resultatsArticles[0].details,
       trajet: `${formData.villeDepart} → ${formData.villeArrivee}`,
-      pole: formData.poleSelectionne
+      pole: poleSelected
     })
     
     setShowResult(true)
@@ -366,88 +431,142 @@ export default function CotationPage() {
                 )}
               </div>
 
-              {/* Dimensions et poids */}
+              {/* Articles */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Package className="h-5 w-5 text-primary" />
-                  Dimensions et poids de la marchandise
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Package className="h-5 w-5 text-primary" />
+                    Articles à transporter
+                  </h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addArticle}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Ajouter un article
+                  </Button>
+                </div>
                 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="poids" className="block text-sm font-medium text-gray-700 mb-2">
-                        Poids total (kg)
-                      </label>
-                      <input
-                        type="number"
-                        id="poids"
-                        name="poids"
-                        value={formData.poids}
-                        onChange={handleInputChange}
-                        min="0.1"
-                        step="0.1"
-                        placeholder="Ex: 500"
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        required
-                      />
+                  {articles.map((article, index) => (
+                    <div key={article.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 relative">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                          <Box className="h-4 w-4" />
+                          Article {index + 1}
+                        </h4>
+                        {articles.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeArticle(article.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Type d'article
+                          </label>
+                          <select
+                            value={article.type}
+                            onChange={(e) => handleArticleChange(article.id, 'type', e.target.value)}
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="palette">Palette</option>
+                            <option value="cartons">Cartons</option>
+                            <option value="tubes">Tubes</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Poids (kg)
+                          </label>
+                          <input
+                            type="number"
+                            value={article.poids}
+                            onChange={(e) => handleArticleChange(article.id, 'poids', e.target.value)}
+                            min="0.1"
+                            step="0.1"
+                            placeholder="Ex: 500"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Longueur (cm)
+                          </label>
+                          <input
+                            type="number"
+                            value={article.longueur}
+                            onChange={(e) => handleArticleChange(article.id, 'longueur', e.target.value)}
+                            min="1"
+                            placeholder="120"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Largeur (cm)
+                          </label>
+                          <input
+                            type="number"
+                            value={article.largeur}
+                            onChange={(e) => handleArticleChange(article.id, 'largeur', e.target.value)}
+                            min="1"
+                            placeholder="80"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Hauteur (cm)
+                          </label>
+                          <input
+                            type="number"
+                            value={article.hauteur}
+                            onChange={(e) => handleArticleChange(article.id, 'hauteur', e.target.value)}
+                            min="1"
+                            placeholder="100"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      {article.type === 'palette' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre de palettes (optionnel)
+                          </label>
+                          <input
+                            type="number"
+                            value={article.nombrePalettes}
+                            onChange={(e) => handleArticleChange(article.id, 'nombrePalettes', e.target.value)}
+                            min="0"
+                            step="1"
+                            placeholder="Laissez vide pour calcul automatique"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                      )}
                     </div>
-                    
-                    <div>
-                      <label htmlFor="nombrePalettes" className="block text-sm font-medium text-gray-700 mb-2">
-                        Nombre de palettes (optionnel)
-                      </label>
-                      <input
-                        type="number"
-                        id="nombrePalettes"
-                        name="nombrePalettes"
-                        value={formData.nombrePalettes}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="1"
-                        placeholder="Ex: 2"
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Dimensions totales (cm)
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <input
-                        type="number"
-                        name="longueur"
-                        value={formData.longueur}
-                        onChange={handleInputChange}
-                        placeholder="Longueur"
-                        min="1"
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        required
-                      />
-                      <input
-                        type="number"
-                        name="largeur"
-                        value={formData.largeur}
-                        onChange={handleInputChange}
-                        placeholder="Largeur"
-                        min="1"
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        required
-                      />
-                      <input
-                        type="number"
-                        name="hauteur"
-                        value={formData.hauteur}
-                        onChange={handleInputChange}
-                        placeholder="Hauteur"
-                        min="1"
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        required
-                      />
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
@@ -597,12 +716,57 @@ export default function CotationPage() {
               </div>
             </div>
             
+            {/* Détail des articles */}
+            {resultat.articles && resultat.articles.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Box className="h-4 w-4" />
+                  Détail des articles
+                </h4>
+                <div className="space-y-3">
+                  {resultat.articles.map((item: any, index: number) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="flex justify-between items-start mb-2">
+                        <h5 className="font-medium text-gray-900">
+                          Article {item.article.numero} - {item.article.type.charAt(0).toUpperCase() + item.article.type.slice(1)}
+                        </h5>
+                        <span className="text-sm font-semibold text-primary">
+                          {formatPrice(item.pricing.basePrice)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-gray-600">Type de transport:</span>
+                          <span className="ml-2 font-medium">{item.transport.type}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Poids:</span>
+                          <span className="ml-2 font-medium">{item.transport.weight} kg</span>
+                        </div>
+                        {item.transport.quantity && (
+                          <div className="col-span-2">
+                            <span className="text-gray-600">Quantité:</span>
+                            <span className="ml-2 font-medium">
+                              {item.transport.type === 'Mètre de plancher' 
+                                ? `${item.transport.quantity} m`
+                                : `${item.transport.quantity} palette${item.transport.quantity > 1 ? 's' : ''}`
+                              }
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Informations de transport */}
               <div className="space-y-4">
                 <h4 className="font-semibold text-gray-900 flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Informations de transport
+                  Informations générales
                 </h4>
                 <div className="space-y-2">
                   <div className="flex justify-between py-2 border-b border-gray-200">
@@ -614,25 +778,12 @@ export default function CotationPage() {
                     <span className="font-medium">{resultat.zone.code} - {resultat.zone.name}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-200">
-                    <span className="text-gray-600">Type de transport</span>
-                    <span className="font-medium">
-                      {resultat.transport.type} 
-                      {resultat.transport.transportMode === 'messagerie' 
-                        ? ''
-                        : resultat.transport.type === 'Mètre de plancher'
-                          ? ` (${resultat.transport.quantity} m)`
-                          : ` (${resultat.transport.quantity} palette${resultat.transport.quantity > 1 ? 's' : ''})`
-                      }
-                    </span>
+                    <span className="text-gray-600">Nombre d'articles</span>
+                    <span className="font-medium">{resultat.transport.nombreArticles}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-200">
-                    <span className="text-gray-600">Poids réel{resultat.transport.poidsVolumetrique ? ' / volumétrique' : ''}</span>
-                    <span className="font-medium">
-                      {resultat.transport.weight} kg
-                      {resultat.transport.poidsVolumetrique && (
-                        <> / {resultat.transport.poidsVolumetrique.toFixed(0)} kg</>
-                      )}
-                    </span>
+                    <span className="text-gray-600">Poids total</span>
+                    <span className="font-medium">{resultat.transport.weight} kg</span>
                   </div>
                   {resultat.transport.poidsFacture && (
                     <div className="flex justify-between py-2 border-b border-gray-200">
