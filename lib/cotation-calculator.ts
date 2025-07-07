@@ -191,29 +191,32 @@ export function calculateCotation(input: CotationInput): CotationResult {
       }
     }
 
-    // 3. Utiliser le poids facturé pour recalculer si nécessaire
+    // 3. Utiliser le poids pour recalculer le nombre de palettes si nécessaire
     let finalQuantity = quantity;
     let weightForTarif = input.weight;
     
-    // Si on a un poids volumétrique, recalculer le nombre de palettes
-    if (estimation.poidsVolumetrique && estimation.poidsFacture) {
-      weightForTarif = estimation.poidsFacture;
+    // Pour les palettes, toujours vérifier si le poids nécessite plus de palettes
+    if (typeTransport === 'palette80x120' || typeTransport === 'palette100x120') {
+      const poidsMaxPalette = 750; // kg par palette
       
-      // Recalculer le nombre de palettes basé sur le poids facturé
-      if (typeTransport === 'palette80x120' || typeTransport === 'palette100x120') {
-        const poidsMaxPalette = 750; // kg par palette
-        const nouvellePalettes = Math.ceil(weightForTarif / poidsMaxPalette);
-        
-        // Si le nouveau nombre dépasse les limites, passer en mètre plancher
-        if ((typeTransport === 'palette80x120' && nouvellePalettes > 33) || 
-            (typeTransport === 'palette100x120' && nouvellePalettes > 26)) {
-          typeTransport = 'metrePlancher';
-          const metresEstimes = nouvellePalettes * 0.4;
-          const paliers = [0.5, 1, 1.2, 1.5, 2, 2.4, 2.8, 3, 3.6, 4, 4.4, 4.8, 5.2, 5.5, 6, 6.4, 6.8, 7.2, 7.6, 8, 8.4, 8.8, 9.2, 9.6, 10, 10.4, 10.8, 11.2, 13.2];
-          finalQuantity = paliers.find(p => p >= metresEstimes) || 13.2;
-        } else {
-          finalQuantity = nouvellePalettes;
-        }
+      // Si on a un poids volumétrique, l'utiliser
+      if (estimation.poidsVolumetrique && estimation.poidsFacture) {
+        weightForTarif = estimation.poidsFacture;
+      }
+      
+      // Calculer le nombre de palettes basé sur le poids
+      const palettesParPoids = Math.ceil(weightForTarif / poidsMaxPalette);
+      
+      // Prendre le maximum entre la quantité estimée et celle basée sur le poids
+      finalQuantity = Math.max(finalQuantity, palettesParPoids);
+      
+      // Si le nombre dépasse les limites, passer en mètre plancher
+      if ((typeTransport === 'palette80x120' && finalQuantity > 33) || 
+          (typeTransport === 'palette100x120' && finalQuantity > 26)) {
+        typeTransport = 'metrePlancher';
+        const metresEstimes = finalQuantity * 0.4;
+        const paliers = [0.5, 1, 1.2, 1.5, 2, 2.4, 2.8, 3, 3.6, 4, 4.4, 4.8, 5.2, 5.5, 6, 6.4, 6.8, 7.2, 7.6, 8, 8.4, 8.8, 9.2, 9.6, 10, 10.4, 10.8, 11.2, 13.2];
+        finalQuantity = paliers.find(p => p >= metresEstimes) || 13.2;
       }
     }
     
