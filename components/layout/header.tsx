@@ -30,7 +30,7 @@ export default function Header() {
             size="xl" 
             showBackground 
             variant="default"
-            className="transform transition-all duration-300 hover:drop-shadow-lg"
+            className="transform transition-all duration-300 hover:drop-shadow-lg scale-110"
           />
         </div>
         <div className="flex lg:hidden">
