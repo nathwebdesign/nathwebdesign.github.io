@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Truck, Package, Clock, Shield, MapPin, BarChart } from "lucide-react"
+import { Truck, Package, Clock } from "lucide-react"
 
 const services = [
   {
@@ -27,31 +27,7 @@ const services = [
     color: "green",
     gradient: "from-green-500 to-green-600",
     bgGradient: "from-green-50 to-green-100"
-  },
-  {
-    name: "Transport Produits DANGEREUX",
-    description: "Transport sécurisé ADR avec conducteurs formés et véhicules équipés.",
-    icon: Shield,
-    color: "red",
-    gradient: "from-red-500 to-red-600",
-    bgGradient: "from-red-50 to-red-100"
-  },
-  {
-    name: "Transport INTERNATIONAL",
-    description: "Solutions de transport vers toute l'Europe avec dédouanement et suivi.",
-    icon: MapPin,
-    color: "cyan",
-    gradient: "from-cyan-500 to-cyan-600",
-    bgGradient: "from-cyan-50 to-cyan-100"
-  },
-  {
-    name: "Transport LOT COMPLET",
-    description: "Transport dédié pour vos chargements complets avec optimisation des coûts.",
-    icon: BarChart,
-    color: "amber",
-    gradient: "from-amber-500 to-amber-600",
-    bgGradient: "from-amber-50 to-amber-100"
-  },
+  }
 ]
 
 export default function ServicesSection() {
