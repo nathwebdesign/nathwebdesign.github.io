@@ -183,15 +183,32 @@ export function calculateCotation(input: CotationInput): CotationResult {
         10.4: 15600, 10.8: 16200, 11.2: 16800, 13.2: 24000
       };
       
+      // Pour le mètre de plancher, ajuster la quantité si le poids dépasse le max
       if (input.weight > maxWeights[quantity]) {
-        return {
-          success: false,
-          error: `Pour ${quantity} mètres de plancher, le poids maximum est de ${maxWeights[quantity]} kg`
-        };
+        // Trouver le bon palier en fonction du poids
+        const validMeters = [0.5, 1, 1.2, 1.5, 2, 2.4, 2.8, 3, 3.6, 4, 4.4, 4.8, 5.2, 5.5, 6, 6.4, 6.8, 7.2, 7.6, 8, 8.4, 8.8, 9.2, 9.6, 10, 10.4, 10.8, 11.2, 13.2];
+        let newQuantity = quantity;
+        
+        for (const meters of validMeters) {
+          if (input.weight <= maxWeights[meters]) {
+            newQuantity = meters;
+            break;
+          }
+        }
+        
+        // Si même 13.2m ne suffit pas
+        if (newQuantity === quantity && input.weight > maxWeights[13.2]) {
+          return {
+            success: false,
+            error: `Le poids de ${input.weight}kg dépasse la capacité maximale de 24000kg pour 13.2m`
+          };
+        }
+        
+        quantity = newQuantity;
       }
     }
 
-    // 3. Utiliser le poids pour recalculer le nombre de palettes si nécessaire
+    // 3. Utiliser le poids pour recalculer si nécessaire
     let finalQuantity = quantity;
     let weightForTarif = input.weight;
     
@@ -346,7 +363,26 @@ export function estimatePalettes(dimensions: { longueur: number; largeur: number
     
     // Arrondir au palier supérieur de la grille
     const paliers = [0.5, 1, 1.2, 1.5, 2, 2.4, 2.8, 3, 3.6, 4, 4.4, 4.8, 5.2, 5.5, 6, 6.4, 6.8, 7.2, 7.6, 8, 8.4, 8.8, 9.2, 9.6, 10, 10.4, 10.8, 11.2, 13.2];
-    const metrePlancher = paliers.find(p => p >= metresAffretes) || 13.2;
+    let metrePlancher = paliers.find(p => p >= metresAffretes) || 13.2;
+    
+    // Vérifier aussi le poids pour les mètres plancher
+    const maxWeights: Record<number, number> = {
+      0.5: 600, 1: 1200, 1.2: 1800, 1.5: 2400, 2: 3000, 2.4: 3600, 2.8: 4200,
+      3: 4800, 3.6: 5400, 4: 6000, 4.4: 6600, 4.8: 7200, 5.2: 7800, 5.5: 8400,
+      6: 9000, 6.4: 9600, 6.8: 10200, 7.2: 10800, 7.6: 11400, 8: 12000,
+      8.4: 12600, 8.8: 13200, 9.2: 13800, 9.6: 14400, 10: 15000,
+      10.4: 15600, 10.8: 16200, 11.2: 16800, 13.2: 24000
+    };
+    
+    // Si le poids dépasse le max pour les mètres calculés, augmenter
+    if (poidsFacture > maxWeights[metrePlancher]) {
+      for (const meters of paliers) {
+        if (poidsFacture <= maxWeights[meters]) {
+          metrePlancher = meters;
+          break;
+        }
+      }
+    }
     
     return {
       nombre: metrePlancher,
