@@ -54,6 +54,24 @@ export default function AxesSection() {
           </p>
         </motion.div>
 
+        {/* Bannière d'information */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          viewport={{ once: true }}
+          className="mb-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white text-center"
+        >
+          <h3 className="text-2xl font-bold mb-4">
+            Couverture Nationale & Européenne
+          </h3>
+          <p className="text-lg text-blue-100 max-w-3xl mx-auto">
+            Depuis ces 4 axes majeurs, nous desservons <strong className="text-white">toute la France</strong> et 
+            les <strong className="text-white">principales destinations européennes</strong>. 
+            Notre expertise nous permet d'optimiser vos flux de transport dans les deux sens.
+          </p>
+        </motion.div>
+
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Carte */}
           <motion.div
@@ -126,24 +144,6 @@ export default function AxesSection() {
             ))}
           </motion.div>
         </div>
-
-        {/* Bannière d'information */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          viewport={{ once: true }}
-          className="mt-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white text-center"
-        >
-          <h3 className="text-2xl font-bold mb-4">
-            Couverture Nationale & Européenne
-          </h3>
-          <p className="text-lg text-blue-100 max-w-3xl mx-auto">
-            Depuis ces 4 axes majeurs, nous desservons <strong className="text-white">toute la France</strong> et 
-            les <strong className="text-white">principales destinations européennes</strong>. 
-            Notre expertise nous permet d'optimiser vos flux de transport dans les deux sens.
-          </p>
-        </motion.div>
       </div>
     </section>
   )
