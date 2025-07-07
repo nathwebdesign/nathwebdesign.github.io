@@ -23,7 +23,7 @@ export default function CotationPage() {
   
   const [articles, setArticles] = useState([{
     id: 1,
-    type: 'palette',  // palette, cartons, tubes
+    type: 'palette',  // palette, colis, tube
     poids: '',
     longueur: '',
     largeur: '',
@@ -482,8 +482,8 @@ export default function CotationPage() {
                             className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                           >
                             <option value="palette">Palette</option>
-                            <option value="cartons">Cartons</option>
-                            <option value="tubes">Tubes</option>
+                            <option value="colis">Colis</option>
+                            <option value="tube">Tube</option>
                           </select>
                         </div>
                         
