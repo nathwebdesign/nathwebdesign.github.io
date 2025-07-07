@@ -5,35 +5,62 @@ import { Truck, Package, Clock } from "lucide-react"
 
 const services = [
   {
-    name: "Transport AFFRÈTEMENT",
+    name: "Affrètement",
     description: "Organisation complète de vos transports avec notre réseau de partenaires sélectionnés.",
     icon: Truck,
-    color: "blue",
-    gradient: "from-blue-500 to-blue-600",
-    bgGradient: "from-blue-50 to-blue-100"
+    features: ["Camions complets", "Groupage", "France entière"],
+    color: "blue"
   },
   {
-    name: "Transport MESSAGERIE",
+    name: "Messagerie",
     description: "Livraison rapide de colis et palettes sur toute la France avec traçabilité complète.",
     icon: Package,
-    color: "purple",
-    gradient: "from-purple-500 to-purple-600",
-    bgGradient: "from-purple-50 to-purple-100"
+    features: ["Colis & palettes", "Traçabilité", "J+1 à J+3"],
+    color: "green"
   },
   {
-    name: "Transport EXPRESS",
-    description: "Livraisons urgentes en moins de 24h sur les principaux axes français et européens.",
+    name: "Express",
+    description: "Livraisons urgentes en moins de 24h sur les principaux axes français.",
     icon: Clock,
-    color: "green",
-    gradient: "from-green-500 to-green-600",
-    bgGradient: "from-green-50 to-green-100"
+    features: ["Urgences", "24h chrono", "Suivi temps réel"],
+    color: "orange"
   }
 ]
 
 export default function ServicesSection() {
+  const getColorClasses = (color: string) => {
+    const colors = {
+      blue: {
+        bg: "bg-blue-50",
+        border: "border-blue-200",
+        icon: "bg-blue-100 text-blue-600",
+        hover: "hover:bg-blue-100 hover:border-blue-300",
+        gradient: "from-blue-500 to-blue-600"
+      },
+      green: {
+        bg: "bg-green-50",
+        border: "border-green-200",
+        icon: "bg-green-100 text-green-600",
+        hover: "hover:bg-green-100 hover:border-green-300",
+        gradient: "from-green-500 to-green-600"
+      },
+      orange: {
+        bg: "bg-orange-50",
+        border: "border-orange-200",
+        icon: "bg-orange-100 text-orange-600",
+        hover: "hover:bg-orange-100 hover:border-orange-300",
+        gradient: "from-orange-500 to-orange-600"
+      }
+    }
+    return colors[color as keyof typeof colors] || colors.blue
+  }
+
   return (
-    <section className="py-24 sm:py-32 bg-transparent">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+    <section className="relative py-24 sm:py-32 overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-white" />
+      
+      <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -42,89 +69,75 @@ export default function ServicesSection() {
           className="mx-auto max-w-2xl text-center"
         >
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Nos <span className="text-primary">Services Transport</span>
+            Nos Services de <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">Transport</span>
           </h2>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            Des solutions complètes pour optimiser votre chaîne d'approvisionnement 
-            et garantir la satisfaction de vos clients.
+            Solutions adaptées à tous vos besoins logistiques
           </p>
         </motion.div>
         
-        <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-          <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-            {services.map((service, index) => (
-              <motion.div
-                key={service.name}
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  duration: 0.6, 
-                  delay: index * 0.1,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                viewport={{ once: true }}
-                whileHover={{ 
-                  y: -10,
-                  scale: 1.03,
-                  transition: { type: "spring", stiffness: 400, damping: 10 }
-                }}
-                className="relative group"
-              >
-                <motion.div 
-                  className="relative flex flex-col h-full p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-[#285dd8]/20 hover:border-[#285dd8]/40"
-                  whileHover={{ borderColor: "rgba(37, 99, 235, 0.4)" }}
+        <div className="mx-auto mt-16 max-w-7xl">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {services.map((service, index) => {
+              const colors = getColorClasses(service.color)
+              return (
+                <motion.div
+                  key={service.name}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: index * 0.1
+                  }}
+                  viewport={{ once: true }}
+                  className="group relative"
                 >
-                  <dt className="text-base font-semibold leading-7 text-gray-900">
-                    <motion.div 
-                      className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10"
-                      whileHover={{ 
-                        scale: 1.1,
-                        backgroundColor: "rgba(37, 99, 235, 0.2)"
-                      }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      <motion.div
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.6 }}
-                      >
-                        <service.icon className="h-6 w-6 text-primary" aria-hidden="true" />
-                      </motion.div>
-                    </motion.div>
-                    <motion.span 
-                      className="text-xl inline-block"
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      transition={{ delay: 0.2 + index * 0.05 }}
-                    >
+                  <div className={`relative h-full rounded-2xl ${colors.bg} ${colors.border} border-2 p-8 transition-all duration-300 ${colors.hover} overflow-hidden`}>
+                    {/* Decorative gradient */}
+                    <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colors.gradient} opacity-5 rounded-full blur-3xl`} />
+                    
+                    {/* Icon */}
+                    <div className={`inline-flex rounded-xl ${colors.icon} p-3 mb-4`}>
+                      <service.icon className="h-8 w-8" />
+                    </div>
+                    
+                    {/* Title */}
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
                       {service.name}
-                    </motion.span>
-                  </dt>
-                  <dd className="mt-3 flex flex-auto flex-col text-base leading-7 text-gray-600">
-                    <p className="flex-auto">{service.description}</p>
-                    <motion.div
-                      className="mt-6"
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-gray-600 mb-6">
+                      {service.description}
+                    </p>
+                    
+                    {/* Features */}
+                    <ul className="space-y-2 mb-6">
+                      {service.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center text-sm text-gray-700">
+                          <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    {/* CTA */}
+                    <a 
+                      href="/services" 
+                      className="inline-flex items-center text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors"
                     >
-                      <a href="/services" className="group/link inline-flex items-center text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                        <span>En savoir plus</span>
-                        <motion.span 
-                          className="ml-1"
-                          initial={{ x: 0 }}
-                          whileHover={{ x: 5 }}
-                          transition={{ type: "spring", stiffness: 400 }}
-                        >
-                          →
-                        </motion.span>
-                      </a>
-                    </motion.div>
-                  </dd>
+                      <span>Découvrir</span>
+                      <svg className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </div>
                 </motion.div>
-              </motion.div>
-            ))}
-          </dl>
+              )
+            })}
+          </div>
         </div>
       </div>
     </section>
