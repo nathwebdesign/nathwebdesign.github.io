@@ -1,119 +1,149 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { MapPin, Plane, Ship, Truck } from "lucide-react"
+import dynamic from "next/dynamic"
 
-const axes = [
+const Map = dynamic(() => import("@/components/cotation/map"), { ssr: false })
+
+const poles = {
+  'Roissy CDG': [49.0097, 2.5479],
+  'Lyon': [45.7640, 4.8357],
+  'Marseille': [43.2965, 5.3698],
+  'Le Havre': [49.4944, 0.1079]
+}
+
+const poleDetails = [
   {
     name: "Roissy CDG",
-    icon: Truck,
     description: "Hub aéroport - Import/Export",
-    color: "blue",
-    size: "large"
+    features: ["Proximité aéroport", "Flux internationaux", "Zone IDF"]
   },
   {
     name: "Lyon",
-    icon: Truck,
     description: "Carrefour logistique européen",
-    color: "purple",
-    size: "large"
+    features: ["Centre névralgique", "Axe Nord-Sud", "Proche Suisse/Italie"]
   },
   {
     name: "Marseille",
-    icon: Truck,
     description: "Port méditerranéen - Fret maritime",
-    color: "cyan",
-    size: "small"
+    features: ["Accès maritime", "Sud de la France", "Porte Méditerranée"]
   },
   {
     name: "Le Havre",
-    icon: Truck,
-    description: "Premier port français - International",
-    color: "green",
-    size: "small"
+    description: "Premier port français",
+    features: ["Import/Export", "Normandie", "Liens UK/Europe"]
   }
 ]
 
 export default function AxesSection() {
   return (
-    <section className="py-24 sm:py-32 bg-transparent">
+    <section className="py-24 sm:py-32 bg-gradient-to-b from-white to-gray-50">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="mb-16 bg-white/85 backdrop-blur-sm rounded-2xl p-8 text-center border border-[#285dd8]/20"
+          className="mx-auto max-w-2xl text-center mb-12"
         >
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
-            France & Europe : Notre Terrain de Jeu
-          </h3>
-          <p className="text-gray-600 max-w-3xl mx-auto">
-            Depuis ces 4 axes majeurs, nous desservons <strong>toute la France</strong> et 
-            <strong> les principales destinations européennes</strong>. Notre expertise nous permet 
-            d'optimiser vos flux de transport dans les deux sens, garantissant efficacité et ponctualité.
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Nos <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">4 Pôles Stratégiques</span>
+          </h2>
+          <p className="mt-6 text-lg leading-8 text-gray-600">
+            Une couverture nationale depuis nos bases logistiques
           </p>
         </motion.div>
 
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
+          {/* Carte */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="relative"
+          >
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+              <div className="h-[500px]">
+                <Map 
+                  depart=""
+                  arrivee=""
+                  poles={poles}
+                />
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800 text-center font-medium">
+                🚚 Livraison dans toute la France depuis ces 4 hubs
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Liste des pôles */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="space-y-4"
+          >
+            {poleDetails.map((pole, index) => (
+              <motion.div
+                key={pole.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ x: 10 }}
+                className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <div className="w-3 h-3 bg-blue-600 rounded-full" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                      {pole.name}
+                    </h3>
+                    <p className="text-gray-600 mb-3">
+                      {pole.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {pole.features.map((feature, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-full"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* Bannière d'information */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
           viewport={{ once: true }}
-          className="mx-auto max-w-2xl text-center"
+          className="mt-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white text-center"
         >
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Nos <span className="text-primary">4 Axes Stratégiques</span>
-          </h2>
-          <p className="mt-6 text-lg leading-8 text-gray-600">
-            Spécialistes du transport depuis et vers les principaux hubs logistiques français.
-            <br />
-            <strong className="text-primary">Toute la France dans les deux sens</strong> depuis ces 4 points stratégiques.
+          <h3 className="text-2xl font-bold mb-4">
+            Couverture Nationale & Européenne
+          </h3>
+          <p className="text-lg text-blue-100 max-w-3xl mx-auto">
+            Depuis ces 4 axes majeurs, nous desservons <strong className="text-white">toute la France</strong> et 
+            les <strong className="text-white">principales destinations européennes</strong>. 
+            Notre expertise nous permet d'optimiser vos flux de transport dans les deux sens.
           </p>
         </motion.div>
-
-        <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {axes.map((axe, index) => (
-            <motion.div
-              key={axe.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5, scale: 1.02 }}
-              className="relative group"
-            >
-              <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all duration-300 border border-[#285dd8]/20 hover:border-[#285dd8]/40">
-                <motion.div
-                  className={`mx-auto mb-4 flex items-center justify-center rounded-xl bg-primary/10 ${
-                    axe.size === 'large' ? 'h-16 w-16' : 'h-12 w-12'
-                  }`}
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <axe.icon className={`text-primary ${
-                    axe.size === 'large' ? 'h-8 w-8' : 'h-6 w-6'
-                  }`} />
-                </motion.div>
-                <h3 className="text-xl font-bold text-gray-900 text-center">
-                  {axe.name}
-                </h3>
-                <p className="mt-2 text-sm text-gray-600 text-center">
-                  {axe.description}
-                </p>
-                <motion.div
-                  className="mt-4 flex items-center justify-center gap-1 text-primary"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <MapPin className="h-4 w-4" />
-                  <span className="text-xs font-medium">Point stratégique</span>
-                </motion.div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
       </div>
     </section>
   )
