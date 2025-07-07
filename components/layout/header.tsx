@@ -27,7 +27,7 @@ export default function Header() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
         <div className="flex lg:flex-1">
           <Logo 
-            size="xl" 
+            size="2xl" 
             showBackground 
             variant="default"
             className="transform transition-all duration-300 hover:drop-shadow-lg"

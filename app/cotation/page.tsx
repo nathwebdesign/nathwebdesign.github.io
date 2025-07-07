@@ -462,6 +462,22 @@ export default function CotationPage() {
                   <label className="flex items-center cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50">
                     <input
                       type="checkbox"
+                      name="hayon"
+                      checked={formData.hayon}
+                      onChange={handleInputChange}
+                      className="mr-3"
+                    />
+                    <div>
+                      <span className="text-sm font-medium">Hayon</span>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Supplément de 30€ pour déchargement avec hayon
+                      </p>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50">
+                    <input
+                      type="checkbox"
                       name="matieresDangereuses"
                       checked={formData.matieresDangereuses}
                       onChange={handleInputChange}
@@ -474,25 +490,6 @@ export default function CotationPage() {
                       </p>
                     </div>
                   </label>
-                </div>
-                
-                {/* Options automatiques - affichage informatif */}
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-blue-900 mb-2">Options automatiques</h4>
-                  <div className="space-y-1 text-xs text-blue-700">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Hayon :</span>
-                      <span>
-                        {(parseFloat(formData.hauteur) > 120 || parseFloat(formData.poids) > 1000) 
-                          ? 'Sera ajouté automatiquement (hauteur > 120cm ou poids > 1000kg)' 
-                          : 'Non nécessaire'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Assurance :</span>
-                      <span>Incluse (minimum 35€)</span>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -581,7 +578,6 @@ export default function CotationPage() {
                   {!formData.poleSelectionne && (
                     <p className="text-xs text-gray-500">Sélectionnez un pôle pour voir les zones tarifaires</p>
                   )}
-                  <p className="text-xs mt-1"><span className="font-medium">Monaco & Corse:</span> Tarifs spéciaux</p>
                 </div>
               </div>
             </div>
