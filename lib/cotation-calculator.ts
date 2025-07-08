@@ -271,6 +271,14 @@ export function calculateCotation(input: CotationInput): CotationResult {
     }
     
     // 4. Calculer le tarif de base selon le pôle
+    console.log('Calcul tarif avec:', {
+      pole: poleIdFormatted,
+      zoneCode: zone.code,
+      typeTransport,
+      quantity: finalQuantity,
+      weight: typeTransport === 'messagerie' ? weightForCalculation : undefined
+    });
+    
     const basePrice = calculateTarifByPole(
       poleIdFormatted, 
       zone.code, 
@@ -278,7 +286,16 @@ export function calculateCotation(input: CotationInput): CotationResult {
       typeTransport === 'messagerie' ? weightForCalculation : finalQuantity,
       typeTransport === 'messagerie' ? weightForCalculation : undefined
     );
+    
+    console.log('Prix de base calculé:', basePrice);
+    
     if (!basePrice) {
+      console.error('Tarif non trouvé pour:', {
+        pole: poleIdFormatted,
+        zone: zone.code,
+        type: typeTransport,
+        quantity: finalQuantity
+      });
       return {
         success: false,
         error: 'Impossible de calculer le tarif pour cette configuration'
