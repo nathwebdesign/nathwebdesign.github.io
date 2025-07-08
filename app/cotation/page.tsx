@@ -134,9 +134,6 @@ export default function CotationPage() {
     e.preventDefault()
     setError('')
     
-    console.log('Articles:', articles)
-    console.log('FormData:', formData)
-    
     // Vérifier qu'au moins un article a des dimensions
     const hasValidArticle = articles.some(a => a.poids && a.longueur && a.largeur && a.hauteur)
     if (!hasValidArticle) {
@@ -201,14 +198,6 @@ export default function CotationPage() {
           valeurMarchandise: 0
         }
 
-        console.log('Calcul cotation pour article', index, {
-          poleId,
-          codePostal,
-          weight,
-          dimensions,
-          nombrePalettes: article.nombrePalettes
-        })
-
         const cotation = calculateCotation({
           poleId,
           postalCodeDestination: codePostal,
@@ -217,8 +206,6 @@ export default function CotationPage() {
           options,
           nombrePalettes: article.nombrePalettes ? parseInt(article.nombrePalettes) : undefined
         })
-
-        console.log('Résultat cotation:', cotation)
 
         if (cotation.success && cotation.data) {
           resultatsArticles.push({
@@ -229,17 +216,12 @@ export default function CotationPage() {
               numero: index + 1
             }
           })
-        } else {
-          console.error('Échec de la cotation:', cotation.error)
         }
       }
     })
 
     if (resultatsArticles.length === 0) {
-      console.error('Aucun résultat d\'article')
-      console.log('Articles traités:', articles)
-      console.log('Résultats:', resultatsArticles)
-      setError('Aucun article valide pour le calcul')
+      setError('Erreur lors du calcul. Vérifiez que le code postal est dans notre zone de livraison.')
       return
     }
 

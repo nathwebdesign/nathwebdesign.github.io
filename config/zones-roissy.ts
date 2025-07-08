@@ -18,7 +18,7 @@ export const zonesRoissy: ZoneRoissy[] = [
   {
     code: 'R2',
     name: 'Nord-Centre',
-    departments: ['02', '10', '14', '51', '61', '72', '80', '89'],
+    departments: ['02', '10', '14', '51', '60', '61', '72', '80', '89'],
     delai: '24h'
   },
   {
