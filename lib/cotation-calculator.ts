@@ -95,7 +95,15 @@ export function calculateCotation(input: CotationInput): CotationResult {
     }
     
     // 1. Déterminer la zone de destination selon le pôle
+    console.log('Recherche zone pour:', {
+      codePostal: input.postalCodeDestination,
+      pole: poleIdFormatted,
+      department: getDepartmentFromPostalCode(input.postalCodeDestination)
+    });
+    
     const zone = getZoneByPostalCodeAndPole(input.postalCodeDestination, poleIdFormatted);
+    console.log('Zone trouvée:', zone);
+    
     if (!zone) {
       return {
         success: false,
