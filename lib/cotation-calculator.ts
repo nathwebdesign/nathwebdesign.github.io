@@ -116,6 +116,13 @@ export function calculateCotation(input: CotationInput): CotationResult {
     let weightForCalculation: number = input.weight;
     let calculAffrètement: any = undefined;
 
+    console.log('Input reçu:', {
+      weight: input.weight,
+      dimensions: input.dimensions,
+      nombrePalettes: input.nombrePalettes,
+      forceType: input.forceType
+    });
+
     // 2. Si forceType est défini, l'utiliser
     if (input.forceType === 'messagerie') {
       // Forcer le mode messagerie
@@ -133,7 +140,18 @@ export function calculateCotation(input: CotationInput): CotationResult {
       weightForCalculation = Math.max(input.weight, poidsVolumetrique);
     } else {
       // Sinon, traiter comme palette/affrètement
-    const estimation = estimatePalettes(input.dimensions, input.weight);
+    console.log('Estimation des palettes...');
+    let estimation;
+    try {
+      estimation = estimatePalettes(input.dimensions, input.weight);
+      console.log('Estimation:', estimation);
+    } catch (error) {
+      console.error('Erreur lors de l\'estimation:', error);
+      return {
+        success: false,
+        error: 'Erreur lors de l\'estimation des palettes'
+      };
+    }
     
     // Si nombre de palettes fourni par l'utilisateur, l'utiliser
     if (input.nombrePalettes && input.nombrePalettes > 0) {
