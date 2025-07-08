@@ -57,6 +57,7 @@ export default function CotationPage() {
   const [resultat, setResultat] = useState<any>(null)
   const [error, setError] = useState<string>('')
   const [showResult, setShowResult] = useState(false)
+  const [selectedDelivery, setSelectedDelivery] = useState<'messagerie' | 'affretement' | 'express' | null>(null)
 
   const addArticle = () => {
     const newId = Math.max(...articles.map(a => a.id)) + 1
@@ -918,11 +919,17 @@ export default function CotationPage() {
                 </h4>
                 <div className="grid grid-cols-1 gap-3">
                   {/* Messagerie */}
-                  <div className={`p-4 rounded-lg border-2 ${
-                    resultat.optionsLivraison.messagerie.disponible 
-                      ? 'border-green-200 bg-green-50' 
-                      : 'border-gray-200 bg-gray-50 opacity-60'
-                  }`}>
+                  <button
+                    onClick={() => resultat.optionsLivraison.messagerie.disponible && setSelectedDelivery('messagerie')}
+                    disabled={!resultat.optionsLivraison.messagerie.disponible}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      selectedDelivery === 'messagerie'
+                        ? 'border-green-500 bg-green-100 ring-2 ring-green-500'
+                        : resultat.optionsLivraison.messagerie.disponible 
+                          ? 'border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100 cursor-pointer' 
+                          : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-gray-900">Messagerie</h5>
@@ -939,10 +946,17 @@ export default function CotationPage() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </button>
                   
                   {/* Affrètement */}
-                  <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
+                  <button
+                    onClick={() => setSelectedDelivery('affretement')}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      selectedDelivery === 'affretement'
+                        ? 'border-blue-500 bg-blue-100 ring-2 ring-blue-500'
+                        : 'border-blue-200 bg-blue-50 hover:border-blue-300 hover:bg-blue-100 cursor-pointer'
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-gray-900">Affrètement</h5>
@@ -957,14 +971,20 @@ export default function CotationPage() {
                         <p className="text-xs text-gray-500">HT</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                   
                   {/* Express */}
-                  <div className={`p-4 rounded-lg border-2 ${
-                    resultat.optionsLivraison.express.disponible 
-                      ? 'border-orange-200 bg-orange-50' 
-                      : 'border-gray-200 bg-gray-50 opacity-60'
-                  }`}>
+                  <button
+                    onClick={() => resultat.optionsLivraison.express.disponible && setSelectedDelivery('express')}
+                    disabled={!resultat.optionsLivraison.express.disponible}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      selectedDelivery === 'express'
+                        ? 'border-orange-500 bg-orange-100 ring-2 ring-orange-500'
+                        : resultat.optionsLivraison.express.disponible 
+                          ? 'border-orange-200 bg-orange-50 hover:border-orange-300 hover:bg-orange-100 cursor-pointer' 
+                          : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-gray-900">Express</h5>
@@ -981,8 +1001,28 @@ export default function CotationPage() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </button>
                 </div>
+                
+                {/* Message d'instruction */}
+                {!selectedDelivery && (
+                  <p className="text-sm text-gray-600 text-center mt-3 italic">
+                    Cliquez sur une option de livraison pour la sélectionner
+                  </p>
+                )}
+                
+                {/* Affichage du choix sélectionné */}
+                {selectedDelivery && (
+                  <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <p className="text-sm font-medium text-primary text-center">
+                      Option sélectionnée : {
+                        selectedDelivery === 'messagerie' ? 'Messagerie' :
+                        selectedDelivery === 'affretement' ? 'Affrètement' :
+                        'Express'
+                      }
+                    </p>
+                  </div>
+                )}
               </div>
             )}
             
