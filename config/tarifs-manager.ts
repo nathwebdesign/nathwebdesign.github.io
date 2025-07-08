@@ -180,6 +180,10 @@ export function calculateTotalPrice(
     attente?: number; // Nombre d'heures
     matieresDangereuses?: boolean;
     valeurMarchandise?: number; // Pour l'assurance
+    hayonEnlevement?: boolean;
+    hayonLivraison?: boolean;
+    rendezVousEnlevement?: boolean;
+    rendezVousLivraison?: boolean;
   },
   poleId?: string // Ajout du pôle pour gérer les différences de tarifs
 ): {
@@ -197,12 +201,38 @@ export function calculateTotalPrice(
   const supplements: Record<string, number> = {};
   let totalHT = basePrice;
 
-  // Forfait hayon
+  // Forfait hayon (ancienne méthode)
   if (options.hayon) {
     // Utiliser le tarif spécifique de Roissy si applicable
     const hayonPrice = poleId === 'roissy' ? optionsTarifairesRoissy.forfaitHayon : supplementOptions.hayon;
     supplements.hayon = hayonPrice;
     totalHT += supplements.hayon;
+  }
+
+  // Hayon à l'enlèvement
+  if (options.hayonEnlevement) {
+    const hayonPrice = poleId === 'roissy' ? optionsTarifairesRoissy.forfaitHayon : supplementOptions.hayon;
+    supplements.hayonEnlevement = hayonPrice;
+    totalHT += supplements.hayonEnlevement;
+  }
+
+  // Hayon à la livraison
+  if (options.hayonLivraison) {
+    const hayonPrice = poleId === 'roissy' ? optionsTarifairesRoissy.forfaitHayon : supplementOptions.hayon;
+    supplements.hayonLivraison = hayonPrice;
+    totalHT += supplements.hayonLivraison;
+  }
+
+  // Rendez-vous à l'enlèvement (forfait 50€)
+  if (options.rendezVousEnlevement) {
+    supplements.rendezVousEnlevement = 50;
+    totalHT += supplements.rendezVousEnlevement;
+  }
+
+  // Rendez-vous à la livraison (forfait 50€)
+  if (options.rendezVousLivraison) {
+    supplements.rendezVousLivraison = 50;
+    totalHT += supplements.rendezVousLivraison;
   }
 
   // Frais d'attente

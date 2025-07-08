@@ -38,9 +38,13 @@ export default function CotationPage() {
     poleArriveeSelectionne: '',  // Pour stocker le pôle sélectionné en mode vers-pole
     codePostalDestination: '',
     // Options (automatisées ou manuelles)
-    hayon: false,  // Sera automatique si hauteur > 120cm ou poids > 1000kg
-    matieresDangereuses: false,  // Reste manuel pour la sécurité
-    // valeurMarchandise: ''  // Champ supprimé
+    hayonEnlevement: false,
+    hayonLivraison: false,
+    matieresDangereuses: false,
+    kitADR: false,
+    quantiteLimitee: false,
+    rendezVousEnlevement: false,
+    rendezVousLivraison: false
   })
   
   const [coordinates, setCoordinates] = useState<{
@@ -225,10 +229,14 @@ export default function CotationPage() {
     
     // Appliquer les options sur le total
     const options = {
-      hayon: hayonNecessaire || formData.hayon,
+      hayon: hayonNecessaire || formData.hayonEnlevement || formData.hayonLivraison,
       attente: 0,
       matieresDangereuses: formData.matieresDangereuses,
-      valeurMarchandise: 0
+      valeurMarchandise: 0,
+      hayonEnlevement: formData.hayonEnlevement,
+      hayonLivraison: formData.hayonLivraison,
+      rendezVousEnlevement: formData.rendezVousEnlevement,
+      rendezVousLivraison: formData.rendezVousLivraison
     }
 
     // Calculer le prix total avec options
@@ -570,45 +578,104 @@ export default function CotationPage() {
                 </div>
               </div>
 
-              {/* Sécurité */}
+              {/* Compléments */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" />
-                  Options de transport
+                  Compléments
                 </h3>
                 
                 <div className="space-y-4">
-                  <label className="flex items-center cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      name="hayon"
-                      checked={formData.hayon}
-                      onChange={handleInputChange}
-                      className="mr-3"
-                    />
-                    <div>
-                      <span className="text-sm font-medium">Hayon</span>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Supplément de 30€ pour déchargement avec hayon
-                      </p>
+                  {/* Hayon */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Hayon</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="hayonEnlevement"
+                          checked={formData.hayonEnlevement}
+                          onChange={handleInputChange}
+                          className="mr-3"
+                        />
+                        <span className="text-sm">À l'enlèvement</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="hayonLivraison"
+                          checked={formData.hayonLivraison}
+                          onChange={handleInputChange}
+                          className="mr-3"
+                        />
+                        <span className="text-sm">À la livraison</span>
+                      </label>
                     </div>
-                  </label>
+                  </div>
                   
-                  <label className="flex items-center cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      name="matieresDangereuses"
-                      checked={formData.matieresDangereuses}
-                      onChange={handleInputChange}
-                      className="mr-3"
-                    />
-                    <div>
-                      <span className="text-sm font-medium">Matières dangereuses</span>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Supplément de 25% appliqué au tarif
-                      </p>
+                  {/* Dangereux */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Dangereux</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="matieresDangereuses"
+                          checked={formData.matieresDangereuses}
+                          onChange={handleInputChange}
+                          className="mr-3"
+                        />
+                        <span className="text-sm">Matières dangereuses</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="kitADR"
+                          checked={formData.kitADR}
+                          onChange={handleInputChange}
+                          className="mr-3"
+                        />
+                        <span className="text-sm">Kit ADR demandé</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="quantiteLimitee"
+                          checked={formData.quantiteLimitee}
+                          onChange={handleInputChange}
+                          className="mr-3"
+                        />
+                        <span className="text-sm">Quantité Limitée</span>
+                      </label>
                     </div>
-                  </label>
+                  </div>
+                  
+                  {/* Rendez-vous */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Rendez-vous</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="rendezVousEnlevement"
+                          checked={formData.rendezVousEnlevement}
+                          onChange={handleInputChange}
+                          className="mr-3"
+                        />
+                        <span className="text-sm">À l'enlèvement</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="rendezVousLivraison"
+                          checked={formData.rendezVousLivraison}
+                          onChange={handleInputChange}
+                          className="mr-3"
+                        />
+                        <span className="text-sm">À la livraison</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -823,6 +890,10 @@ export default function CotationPage() {
                     <div key={key} className="flex justify-between">
                       <span className="text-gray-600">
                         {key === 'hayon' && 'Forfait hayon'}
+                        {key === 'hayonEnlevement' && 'Hayon à l\'enlèvement'}
+                        {key === 'hayonLivraison' && 'Hayon à la livraison'}
+                        {key === 'rendezVousEnlevement' && 'Rendez-vous à l\'enlèvement'}
+                        {key === 'rendezVousLivraison' && 'Rendez-vous à la livraison'}
                         {key === 'attente' && 'Frais d\'attente'}
                         {key === 'matieresDangereuses' && 'Supplément matières dangereuses'}
                         {key === 'assurance' && <span className="flex items-center gap-1"><Shield className="h-3 w-3" /> Assurance</span>}

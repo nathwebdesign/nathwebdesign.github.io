@@ -158,6 +158,10 @@ export function calculateTotalPriceLyon(
     attente?: number; // Nombre d'heures
     matieresDangereuses?: boolean;
     valeurMarchandise?: number; // Pour l'assurance
+    hayonEnlevement?: boolean;
+    hayonLivraison?: boolean;
+    rendezVousEnlevement?: boolean;
+    rendezVousLivraison?: boolean;
   }
 ): {
   basePrice: number;
@@ -169,10 +173,34 @@ export function calculateTotalPriceLyon(
   const supplements: Record<string, number> = {};
   let totalHT = basePrice;
 
-  // Forfait hayon
+  // Forfait hayon (ancienne méthode)
   if (options.hayon) {
     supplements.hayon = supplementOptionsLyon.hayon;
     totalHT += supplements.hayon;
+  }
+
+  // Hayon à l'enlèvement
+  if (options.hayonEnlevement) {
+    supplements.hayonEnlevement = supplementOptionsLyon.hayon;
+    totalHT += supplements.hayonEnlevement;
+  }
+
+  // Hayon à la livraison
+  if (options.hayonLivraison) {
+    supplements.hayonLivraison = supplementOptionsLyon.hayon;
+    totalHT += supplements.hayonLivraison;
+  }
+
+  // Rendez-vous à l'enlèvement (forfait 50€)
+  if (options.rendezVousEnlevement) {
+    supplements.rendezVousEnlevement = 50;
+    totalHT += supplements.rendezVousEnlevement;
+  }
+
+  // Rendez-vous à la livraison (forfait 50€)
+  if (options.rendezVousLivraison) {
+    supplements.rendezVousLivraison = 50;
+    totalHT += supplements.rendezVousLivraison;
   }
 
   // Frais d'attente
