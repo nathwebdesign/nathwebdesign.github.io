@@ -350,13 +350,6 @@ export function estimatePalettes(dimensions: { longueur: number; largeur: number
   
   // Si ce n'est pas une palette standard, TOUJOURS utiliser la formule d'affrètement
   if (!isPalette80x120 && !isPalette100x120) {
-    // Calcul du poids volumétrique : L × l × h × 250
-    const volumeM3 = longueurM * largeurM * hauteurM;
-    const poidsVolumetrique = volumeM3 * 250;
-    
-    // Utiliser le plus grand entre poids réel et poids volumétrique
-    const poidsFacture = Math.max(poids, poidsVolumetrique);
-    
     // Pour les dimensions non standard, toujours utiliser la formule d'affrètement
     // Formule d'affrètement : longueur × largeur ÷ 2.4
     const metresAffretes = (longueurM * largeurM) / 2.4;
@@ -375,9 +368,9 @@ export function estimatePalettes(dimensions: { longueur: number; largeur: number
     };
     
     // Si le poids dépasse le max pour les mètres calculés, augmenter
-    if (poidsFacture > maxWeights[metrePlancher]) {
+    if (poids > maxWeights[metrePlancher]) {
       for (const meters of paliers) {
-        if (poidsFacture <= maxWeights[meters]) {
+        if (poids <= maxWeights[meters]) {
           metrePlancher = meters;
           break;
         }
@@ -392,9 +385,7 @@ export function estimatePalettes(dimensions: { longueur: number; largeur: number
         longueur: longueurM,
         largeur: largeurM,
         metresCalcules: metresAffretes,
-        metresFactures: metrePlancher,
-        poidsVolumetrique: poidsVolumetrique,
-        poidsFacture: poidsFacture
+        metresFactures: metrePlancher
       }
     };
   }
@@ -429,12 +420,6 @@ export function estimatePalettes(dimensions: { longueur: number; largeur: number
   };
 }
 
-// Fonction pour calculer le poids volumétrique
-export function calculateVolumetricWeight(dimensions: { longueur: number; largeur: number; hauteur: number }): number {
-  // Pour la messagerie : 1m³ = 250kg
-  const volumeM3 = (dimensions.longueur * dimensions.largeur * dimensions.hauteur) / 1000000;
-  return volumeM3 * 250;
-}
 
 // Fonction pour déterminer automatiquement le type de transport
 export function determineTransportType(weight: number, dimensions: { longueur: number; largeur: number; hauteur: number }): {

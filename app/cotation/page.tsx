@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { MapPin, Package, Calculator, FileText, Download, Printer, Truck, AlertCircle, Euro, Shield, Clock as ClockIcon, Plus, Trash2, Box } from "lucide-react"
 import dynamic from "next/dynamic"
-import { calculateCotation, estimatePalettes, calculateVolumetricWeight, determineTransportType } from "@/lib/cotation-calculator"
+import { calculateCotation, estimatePalettes, determineTransportType } from "@/lib/cotation-calculator"
 import { getDepartmentFromPostalCode } from "@/config/zones"
 import { calculateTotalPrice } from "@/config/tarifs-manager"
 
