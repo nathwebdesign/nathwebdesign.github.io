@@ -18,7 +18,7 @@ export const roissyZones: PoleZone[] = [
   {
     code: 'R1',
     name: 'Normandie-Centre',
-    departments: ['27', '28', '45', '76']
+    departments: ['27', '28', '45', '60', '76']
   },
   {
     code: 'R2',
