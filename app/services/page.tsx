@@ -15,7 +15,8 @@ const mainServices = [
       "Solutions nationales et internationales"
     ],
     icon: Truck,
-    color: "from-blue-500 to-blue-600"
+    color: "blue",
+    gradient: "from-blue-500 to-blue-600"
   },
   {
     name: "Messagerie",
@@ -28,7 +29,8 @@ const mainServices = [
       "Réseau national de distribution"
     ],
     icon: Package,
-    color: "from-green-500 to-green-600"
+    color: "green",
+    gradient: "from-green-500 to-green-600"
   },
   {
     name: "Express",
@@ -41,11 +43,36 @@ const mainServices = [
       "Service premium garanti"
     ],
     icon: Clock,
-    color: "from-orange-500 to-orange-600"
+    color: "orange",
+    gradient: "from-orange-500 to-orange-600"
   }
 ]
 
 export default function ServicesPage() {
+  const getColorClasses = (color: string) => {
+    const colors = {
+      blue: {
+        bg: "bg-blue-50",
+        border: "border-blue-200",
+        icon: "bg-blue-100 text-blue-600",
+        hover: "hover:bg-blue-100 hover:border-blue-300"
+      },
+      green: {
+        bg: "bg-green-50",
+        border: "border-green-200",
+        icon: "bg-green-100 text-green-600",
+        hover: "hover:bg-green-100 hover:border-green-300"
+      },
+      orange: {
+        bg: "bg-orange-50",
+        border: "border-orange-200",
+        icon: "bg-orange-100 text-orange-600",
+        hover: "hover:bg-orange-100 hover:border-orange-300"
+      }
+    }
+    return colors[color as keyof typeof colors] || colors.blue
+  }
+
   return (
     <div className="py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -67,76 +94,73 @@ export default function ServicesPage() {
 
         <div className="mx-auto mt-16 max-w-7xl">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {mainServices.map((service, index) => (
-              <motion.div
-                key={service.name}
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  duration: 0.5, 
-                  delay: index * 0.1,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                whileHover={{ 
-                  y: -10,
-                  scale: 1.02,
-                  transition: { type: "spring", stiffness: 400, damping: 10 }
-                }}
-                className="relative rounded-2xl border border-gray-200 p-8 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white overflow-hidden group"
-              >
-                {/* Gradient background on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-                
-                <div className="relative z-10">
-                  <div className="flex flex-col items-center text-center mb-6">
-                    <motion.div 
-                      className={`flex h-16 w-16 items-center justify-center rounded-lg bg-gradient-to-br ${service.color} mb-4`}
-                      whileHover={{ 
-                        rotate: 360,
-                        scale: 1.1
-                      }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <service.icon className="h-8 w-8 text-white" aria-hidden="true" />
-                    </motion.div>
-                    <h3 className="text-2xl font-bold text-gray-900">{service.name}</h3>
-                  </div>
+            {mainServices.map((service, index) => {
+              const colors = getColorClasses(service.color)
+              return (
+                <motion.div
+                  key={service.name}
+                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: index * 0.1,
+                    type: "spring",
+                    stiffness: 100
+                  }}
+                  whileHover={{ 
+                    y: -10,
+                    scale: 1.02,
+                    transition: { type: "spring", stiffness: 400, damping: 10 }
+                  }}
+                  className={`relative rounded-2xl ${colors.bg} ${colors.border} border-2 p-8 transition-all duration-300 ${colors.hover} overflow-hidden group`}
+                >
+                  {/* Gradient background decoration */}
+                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${service.gradient} opacity-5 rounded-full blur-3xl`} />
                   
-                  <p className="text-gray-600 mb-8 text-center">{service.description}</p>
-                  
-                  <ul className="space-y-3">
-                    {service.features.map((feature, featureIndex) => (
-                      <motion.li 
-                        key={feature} 
-                        className="flex items-start"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 + index * 0.1 + featureIndex * 0.05 }}
+                  <div className="relative z-10">
+                    <div className="flex flex-col items-center text-center mb-6">
+                      <motion.div 
+                        className={`inline-flex rounded-xl ${colors.icon} p-3 mb-4`}
+                        whileHover={{ 
+                          rotate: 360,
+                          scale: 1.1
+                        }}
+                        transition={{ duration: 0.6 }}
                       >
-                        <motion.svg
-                          className="h-5 w-5 text-primary mt-0.5 mr-3 flex-shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                          stroke="currentColor"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.3 + index * 0.1 + featureIndex * 0.05 }}
+                        <service.icon className="h-8 w-8" aria-hidden="true" />
+                      </motion.div>
+                      <h3 className="text-2xl font-bold text-gray-900">{service.name}</h3>
+                    </div>
+                    
+                    <p className="text-gray-600 mb-8 text-center">{service.description}</p>
+                    
+                    <ul className="space-y-3">
+                      {service.features.map((feature, featureIndex) => (
+                        <motion.li 
+                          key={feature} 
+                          className="flex items-start"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 + index * 0.1 + featureIndex * 0.05 }}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M4.5 12.75l6 6 9-13.5"
-                          />
-                        </motion.svg>
-                        <span className="text-sm text-gray-600">{feature}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                </div>
-              </motion.div>
-            ))}
+                          <motion.svg
+                            className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.3 + index * 0.1 + featureIndex * 0.05 }}
+                          >
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </motion.svg>
+                          <span className="text-sm text-gray-600">{feature}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
 
