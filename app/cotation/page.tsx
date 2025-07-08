@@ -1184,14 +1184,6 @@ export default function CotationPage() {
                       <span className="text-lg font-semibold">Total HT</span>
                       <span className="text-lg font-bold text-primary">{formatPrice(getSelectedPrice()?.totalHT || 0)}</span>
                     </div>
-                    <div className="flex justify-between mt-2">
-                      <span className="text-sm text-gray-600">TVA (20%)</span>
-                      <span className="text-sm font-medium">{formatPrice(getSelectedPrice()?.tva || 0)}</span>
-                    </div>
-                    <div className="flex justify-between mt-2 pt-2 border-t border-gray-300">
-                      <span className="text-lg font-semibold">Total TTC</span>
-                      <span className="text-lg font-bold text-green-600">{formatPrice(getSelectedPrice()?.totalTTC || 0)}</span>
-                    </div>
                   </div>
                 </div>
               </div>
