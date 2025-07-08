@@ -11,6 +11,8 @@ export interface VehiculeExpress {
     longueurMax?: number; // en cm
     largeurMax?: number; // en cm
     hauteurMax?: number; // en cm
+    nombrePalettesMax?: number; // nombre max de palettes 80x120
+    descriptionCapacite?: string; // description de la capacité
   };
 }
 
@@ -23,9 +25,11 @@ export const vehiculesExpress: VehiculeExpress[] = [
     capacite: {
       poidsMax: 350,
       volumeMax: 2,
-      longueurMax: 180,
-      largeurMax: 120,
-      hauteurMax: 80
+      longueurMax: 120,  // 1 palette 80x120
+      largeurMax: 80,
+      hauteurMax: 100,
+      nombrePalettesMax: 1,
+      descriptionCapacite: '1 palette 80x120x100'
     }
   },
   {
@@ -35,9 +39,11 @@ export const vehiculesExpress: VehiculeExpress[] = [
     capacite: {
       poidsMax: 800,
       volumeMax: 8,
-      longueurMax: 300,
-      largeurMax: 180,
-      hauteurMax: 180
+      longueurMax: 240,  // Pour 3 palettes en longueur (80x3) ou 2x120
+      largeurMax: 120,
+      hauteurMax: 160,
+      nombrePalettesMax: 3,
+      descriptionCapacite: '3 palettes 80x120x160'
     }
   },
   {
@@ -47,9 +53,11 @@ export const vehiculesExpress: VehiculeExpress[] = [
     capacite: {
       poidsMax: 1200,
       volumeMax: 20,
-      longueurMax: 600,
-      largeurMax: 240,
-      hauteurMax: 240
+      longueurMax: 560,  // Pour 7 palettes
+      largeurMax: 120,
+      hauteurMax: 200,
+      nombrePalettesMax: 7,
+      descriptionCapacite: '7 palettes 80x120x200'
     }
   },
   {
@@ -59,9 +67,11 @@ export const vehiculesExpress: VehiculeExpress[] = [
     capacite: {
       poidsMax: 10000,
       volumeMax: 50,
-      longueurMax: 800,
-      largeurMax: 245,
-      hauteurMax: 300
+      longueurMax: 720,  // Pour 18 palettes (plusieurs rangées)
+      largeurMax: 240,   // 2 palettes côte à côte
+      hauteurMax: 220,
+      nombrePalettesMax: 18,
+      descriptionCapacite: '18 palettes 80x120x220'
     }
   },
   {
@@ -71,9 +81,11 @@ export const vehiculesExpress: VehiculeExpress[] = [
     capacite: {
       poidsMax: 24000,
       volumeMax: 90,
-      longueurMax: 1360,
-      largeurMax: 245,
-      hauteurMax: 300
+      longueurMax: 1360,  // Longueur standard semi
+      largeurMax: 240,    // 2 palettes côte à côte
+      hauteurMax: 240,
+      nombrePalettesMax: 33,
+      descriptionCapacite: '33 palettes 80x120x240'
     }
   }
 ];
@@ -81,7 +93,8 @@ export const vehiculesExpress: VehiculeExpress[] = [
 // Fonction pour sélectionner le véhicule approprié
 export function selectExpressVehicle(
   poids: number, 
-  dimensions: { longueur: number; largeur: number; hauteur: number }
+  dimensions: { longueur: number; largeur: number; hauteur: number },
+  nombrePalettes?: number
 ): VehiculeExpress | null {
   // Calculer le volume en m³
   const volumeM3 = (dimensions.longueur * dimensions.largeur * dimensions.hauteur) / 1000000;
@@ -95,6 +108,9 @@ export function selectExpressVehicle(
     
     // Vérifier le volume
     if (volumeM3 > capacite.volumeMax) continue;
+    
+    // Vérifier le nombre de palettes si spécifié
+    if (nombrePalettes && capacite.nombrePalettesMax && nombrePalettes > capacite.nombrePalettesMax) continue;
     
     // Vérifier les dimensions (si spécifiées)
     if (capacite.longueurMax && dimensions.longueur > capacite.longueurMax) continue;

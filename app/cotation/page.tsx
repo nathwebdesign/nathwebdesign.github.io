@@ -307,15 +307,19 @@ export default function CotationPage() {
     
     // Sélectionner le véhicule approprié en fonction du poids total et des dimensions max
     let dimensionsMax = { longueur: 0, largeur: 0, hauteur: 0 }
+    let nombrePalettesTotal = 0
     articles.forEach(article => {
       if (article.longueur && article.largeur && article.hauteur) {
         dimensionsMax.longueur = Math.max(dimensionsMax.longueur, parseFloat(article.longueur))
         dimensionsMax.largeur = Math.max(dimensionsMax.largeur, parseFloat(article.largeur))
         dimensionsMax.hauteur = Math.max(dimensionsMax.hauteur, parseFloat(article.hauteur))
       }
+      if (article.type === 'palette' && article.nombrePalettes) {
+        nombrePalettesTotal += parseInt(article.nombrePalettes)
+      }
     })
     
-    vehiculeExpress = selectExpressVehicle(poidsTotal, dimensionsMax)
+    vehiculeExpress = selectExpressVehicle(poidsTotal, dimensionsMax, nombrePalettesTotal)
     
     if (vehiculeExpress && coordinates.depart && coordinates.arrivee) {
       distanceAllerRetour = estimateDistance(coordinates.depart, coordinates.arrivee)
@@ -356,7 +360,7 @@ export default function CotationPage() {
           vehicule: vehiculeExpress?.nom,
           distance: distanceAllerRetour,
           message: vehiculeExpress 
-            ? `${vehiculeExpress.nom} - ${distanceAllerRetour} km A/R × ${vehiculeExpress.coefficient}€/km`
+            ? `${vehiculeExpress.nom} (${vehiculeExpress.capacite.descriptionCapacite || `max ${vehiculeExpress.capacite.poidsMax}kg`}) - ${distanceAllerRetour} km A/R × ${vehiculeExpress.coefficient}€/km`
             : 'Dimensions ou poids trop importants pour l\'Express'
         }
       }
