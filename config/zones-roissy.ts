@@ -12,13 +12,13 @@ export const zonesRoissy: ZoneRoissy[] = [
   {
     code: 'R1',
     name: 'Normandie-Centre',
-    departments: ['27', '28', '45', '76'],
+    departments: ['27', '28', '45', '60', '76'],
     delai: '24h'
   },
   {
     code: 'R2',
     name: 'Nord-Centre',
-    departments: ['02', '10', '14', '51', '60', '61', '72', '80', '89'],
+    departments: ['02', '10', '14', '51', '61', '72', '80', '89'],
     delai: '24h'
   },
   {
