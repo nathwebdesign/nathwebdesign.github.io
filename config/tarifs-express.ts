@@ -21,7 +21,7 @@ export const vehiculesExpress: VehiculeExpress[] = [
     nom: 'Break',
     coefficient: 0.5,
     capacite: {
-      poidsMax: 500,
+      poidsMax: 350,
       volumeMax: 2,
       longueurMax: 180,
       largeurMax: 120,
@@ -33,7 +33,7 @@ export const vehiculesExpress: VehiculeExpress[] = [
     nom: 'Fourgon',
     coefficient: 0.7,
     capacite: {
-      poidsMax: 1200,
+      poidsMax: 800,
       volumeMax: 8,
       longueurMax: 300,
       largeurMax: 180,
@@ -45,7 +45,7 @@ export const vehiculesExpress: VehiculeExpress[] = [
     nom: 'Grand Volume 20m³',
     coefficient: 0.9,
     capacite: {
-      poidsMax: 3000,
+      poidsMax: 1200,
       volumeMax: 20,
       longueurMax: 600,
       largeurMax: 240,
@@ -57,7 +57,7 @@ export const vehiculesExpress: VehiculeExpress[] = [
     nom: 'Porteur',
     coefficient: 1.3,
     capacite: {
-      poidsMax: 12000,
+      poidsMax: 10000,
       volumeMax: 50,
       longueurMax: 800,
       largeurMax: 245,
