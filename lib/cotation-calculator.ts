@@ -55,6 +55,13 @@ export interface CotationResult {
         metresCalcules: number;
         metresFactures: number;
       };
+      calculVolumetrique?: { // Information sur le calcul volumétrique pour messagerie
+        longueur: number;
+        largeur: number;
+        hauteur: number;
+        volumeM3: number;
+        poidsVolumetrique: number;
+      };
     };
     pricing: {
       basePrice: number;
@@ -106,6 +113,16 @@ export function calculateCotation(input: CotationInput): CotationResult {
       // Forcer le mode messagerie
       typeTransport = 'messagerie';
       quantity = 1;
+      
+      // Pour la messagerie, calculer le poids volumétrique
+      // Formule : L × l × h × 250 (dimensions en mètres)
+      const longueurM = input.dimensions.longueur / 100;
+      const largeurM = input.dimensions.largeur / 100;
+      const hauteurM = input.dimensions.hauteur / 100;
+      const poidsVolumetrique = longueurM * largeurM * hauteurM * 250;
+      
+      // Utiliser le plus grand entre poids réel et poids volumétrique
+      weightForCalculation = Math.max(input.weight, poidsVolumetrique);
     } else {
       // Sinon, traiter comme palette/affrètement
     const estimation = estimatePalettes(input.dimensions, input.weight);
@@ -288,12 +305,22 @@ export function calculateCotation(input: CotationInput): CotationResult {
 
     // Calculer le poids volumétrique si nécessaire
     let poidsVolumetrique = undefined;
-    let poidsFacture = input.weight;
+    let poidsFacture = weightForCalculation;
+    let calculVolumetrique = undefined;
     
-    // Pour les dimensions non standard, calculer le poids volumétrique
-    if (estimation.poidsVolumetrique) {
-      poidsVolumetrique = estimation.poidsVolumetrique;
-      poidsFacture = estimation.poidsFacture || input.weight;
+    // Pour la messagerie, ajouter les détails du calcul volumétrique
+    if (typeTransport === 'messagerie') {
+      const longueurM = input.dimensions.longueur / 100;
+      const largeurM = input.dimensions.largeur / 100;
+      const hauteurM = input.dimensions.hauteur / 100;
+      poidsVolumetrique = longueurM * largeurM * hauteurM * 250;
+      calculVolumetrique = {
+        longueur: longueurM,
+        largeur: largeurM,
+        hauteur: hauteurM,
+        volumeM3: longueurM * largeurM * hauteurM,
+        poidsVolumetrique: poidsVolumetrique
+      };
     }
 
     return {
@@ -310,9 +337,10 @@ export function calculateCotation(input: CotationInput): CotationResult {
           weight: input.weight,
           poidsVolumetrique: poidsVolumetrique,
           poidsFacture: poidsFacture,
-          transportMode: 'palette',
-          selectionReason: estimation.baseSur || undefined,
-          calculAffrètement: calculAffrètement
+          transportMode: typeTransport === 'messagerie' ? 'messagerie' : 'palette',
+          selectionReason: estimation?.baseSur || undefined,
+          calculAffrètement: calculAffrètement,
+          calculVolumetrique: calculVolumetrique
         },
         pricing,
         details: {

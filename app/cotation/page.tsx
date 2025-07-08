@@ -1099,6 +1099,31 @@ export default function CotationPage() {
               </div>
             )}
             
+            {/* Information sur le calcul volumétrique pour messagerie */}
+            {resultat.transport.calculVolumetrique && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Calcul volumétrique pour messagerie
+                </h4>
+                <p className="text-sm text-blue-800 mb-2">
+                  Dimensions du colis : {resultat.transport.calculVolumetrique.longueur}m × {resultat.transport.calculVolumetrique.largeur}m × {resultat.transport.calculVolumetrique.hauteur}m
+                </p>
+                <p className="text-sm text-blue-800">
+                  Volume : {resultat.transport.calculVolumetrique.volumeM3.toFixed(3)} m³
+                </p>
+                <p className="text-sm text-blue-800">
+                  Formule : {resultat.transport.calculVolumetrique.longueur} × {resultat.transport.calculVolumetrique.largeur} × {resultat.transport.calculVolumetrique.hauteur} × 250 = {resultat.transport.calculVolumetrique.poidsVolumetrique.toFixed(1)}kg
+                </p>
+                <p className="text-sm text-blue-800 font-medium mt-1">
+                  Poids réel : {resultat.transport.weight}kg | Poids volumétrique : {resultat.transport.calculVolumetrique.poidsVolumetrique.toFixed(1)}kg
+                </p>
+                <p className="text-sm text-blue-800 font-medium">
+                  Poids facturé : {resultat.transport.poidsFacture.toFixed(1)}kg (le plus élevé)
+                </p>
+              </div>
+            )}
+            
             {/* Conditions spéciales */}
             {resultat.details.conditionsSpeciales && resultat.details.conditionsSpeciales.length > 0 && (
               <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
