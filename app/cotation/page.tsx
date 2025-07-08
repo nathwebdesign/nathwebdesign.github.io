@@ -340,7 +340,7 @@ export default function CotationPage() {
   }
 
   return (
-    <div className="min-h-screen py-12 pt-24 lg:pt-28">
+    <div className="min-h-screen py-12 pt-28 lg:pt-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center mb-12">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
