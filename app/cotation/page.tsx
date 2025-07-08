@@ -28,7 +28,7 @@ export default function CotationPage() {
     longueur: '',
     largeur: '',
     hauteur: '',
-    nombrePalettes: '',
+    nombrePalettes: '1',  // Par défaut 1 palette
     gerbable: true  // Par défaut gerbable
   }])
 
@@ -66,7 +66,7 @@ export default function CotationPage() {
       longueur: '',
       largeur: '',
       hauteur: '',
-      nombrePalettes: '',
+      nombrePalettes: '1',
       gerbable: true
     }])
   }
@@ -78,12 +78,22 @@ export default function CotationPage() {
   }
 
   const handleArticleChange = (id: number, field: string, value: string) => {
-    setArticles(articles.map(article => 
-      article.id === id ? { 
-        ...article, 
-        [field]: field === 'gerbable' ? (value === 'true') : value 
-      } : article
-    ))
+    setArticles(articles.map(article => {
+      if (article.id === id) {
+        const updatedArticle = { 
+          ...article, 
+          [field]: field === 'gerbable' ? (value === 'true') : value 
+        }
+        
+        // Si on change le type vers palette, initialiser le nombre de palettes à 1
+        if (field === 'type' && value === 'palette' && !article.nombrePalettes) {
+          updatedArticle.nombrePalettes = '1'
+        }
+        
+        return updatedArticle
+      }
+      return article
+    }))
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -625,15 +635,15 @@ export default function CotationPage() {
                         <div className="space-y-3">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Nombre de palettes (optionnel)
+                              Nombre de palettes
                             </label>
                             <input
                               type="number"
                               value={article.nombrePalettes}
                               onChange={(e) => handleArticleChange(article.id, 'nombrePalettes', e.target.value)}
-                              min="0"
+                              min="1"
                               step="1"
-                              placeholder="Laissez vide pour calcul automatique"
+                              placeholder="1"
                               className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                             />
                           </div>
