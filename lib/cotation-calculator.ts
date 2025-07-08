@@ -511,9 +511,9 @@ function getDefaultPostalCodeForPole(poleId: string): string {
 export function getMinimumPriceForPole(poleId: string): number {
   switch (poleId) {
     case 'roissy':
-      return 91; // Prix minimum pour Roissy
+      return 91; // Prix minimum pour Roissy (R1, 1 palette)
     case 'marseille':
-      return 91; // Prix minimum pour Marseille (R1, 1 palette)
+      return 101; // Prix minimum pour Marseille (R1, 1 palette)
     case 'lyon':
       return 91; // Prix minimum pour Lyon (R1, 1 palette)
     case 'le-havre':

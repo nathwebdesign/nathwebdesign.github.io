@@ -20,7 +20,6 @@ const poles: Record<string, [number, number]> = {
 
 export default function CotationPage() {
   const [typeTransport, setTypeTransport] = useState<'depuis-pole' | 'vers-pole'>('depuis-pole')
-  const [typeLivraison, setTypeLivraison] = useState<'affretement' | 'messagerie' | 'express'>('affretement')
   
   const [articles, setArticles] = useState([{
     id: 1,
@@ -130,88 +129,6 @@ export default function CotationPage() {
     return match ? match[0] : ''
   }
 
-  // État pour stocker le prix calculé en affrètement
-  const [prixAffretement, setPrixAffretement] = useState<number | null>(null)
-  
-  // Calculer le poids total
-  const poidsTotal = articles.reduce((sum, article) => {
-    if (article.poids) {
-      return sum + parseFloat(article.poids)
-    }
-    return sum
-  }, 0)
-
-  // Fonction pour calculer le prix en affrètement (pour vérifier si messagerie disponible)
-  const calculateAffretementPrice = React.useCallback(() => {
-    if (!formData.villeDepart && !formData.villeArrivee) return null
-    if (!articles.some(a => a.poids && a.longueur && a.largeur && a.hauteur)) return null
-    
-    const poleSelected = typeTransport === 'depuis-pole' ? formData.poleSelectionne || formData.villeDepart : formData.poleArriveeSelectionne || formData.villeArrivee
-    const poleId = poleSelected === 'Roissy CDG' ? 'roissy' : 
-                   poleSelected === 'Marseille' ? 'marseille' : 
-                   poleSelected === 'Lyon' ? 'lyon' : 
-                   poleSelected === 'Le Havre' ? 'le-havre' : ''
-    
-    if (!poleId) return null
-    
-    const codePostal = formData.codePostalDestination || extractPostalCode(
-      typeTransport === 'depuis-pole' ? formData.villeArrivee : formData.villeDepart
-    )
-    
-    if (!codePostal) return null
-    
-    let totalPrice = 0
-    
-    articles.forEach(article => {
-      if (article.poids && article.longueur && article.largeur && article.hauteur) {
-        const cotation = calculateCotation({
-          poleId,
-          postalCodeDestination: codePostal,
-          weight: parseFloat(article.poids),
-          dimensions: {
-            longueur: parseFloat(article.longueur),
-            largeur: parseFloat(article.largeur),
-            hauteur: parseFloat(article.hauteur)
-          },
-          options: {
-            hayon: false,
-            attente: 0,
-            matieresDangereuses: false,
-            valeurMarchandise: 0
-          },
-          nombrePalettes: article.nombrePalettes ? parseInt(article.nombrePalettes) : undefined,
-          forceType: 'affretement'
-        })
-        
-        if (cotation.success && cotation.data) {
-          totalPrice += cotation.data.pricing.basePrice
-        }
-      }
-    })
-    
-    return totalPrice > 0 ? totalPrice : null
-  }, [formData, articles, typeTransport])
-
-  // Calculer le prix affrètement quand les données changent
-  React.useEffect(() => {
-    const price = calculateAffretementPrice()
-    setPrixAffretement(price)
-  }, [calculateAffretementPrice])
-
-  // Déterminer si la messagerie est disponible
-  const minimumPrice = formData.poleSelectionne || formData.poleArriveeSelectionne ? 
-    getMinimumPriceForPole(
-      (formData.poleSelectionne || formData.poleArriveeSelectionne || '').toLowerCase().replace('roissy cdg', 'roissy').replace('le havre', 'le-havre').replace(/ /g, '-')
-    ) : null
-  
-  const isMessagerieAvailable = prixAffretement !== null && minimumPrice !== null && prixAffretement < minimumPrice
-
-  // Si la messagerie était sélectionnée mais n'est plus disponible, passer en affrètement
-  React.useEffect(() => {
-    if (typeLivraison === 'messagerie' && !isMessagerieAvailable) {
-      setTypeLivraison('affretement')
-    }
-  }, [isMessagerieAvailable, typeLivraison])
 
   const calculatePrice = (e: React.FormEvent) => {
     e.preventDefault()
@@ -287,8 +204,7 @@ export default function CotationPage() {
           weight,
           dimensions,
           options,
-          nombrePalettes: article.nombrePalettes ? parseInt(article.nombrePalettes) : undefined,
-          forceType: typeLivraison === 'messagerie' ? 'messagerie' : 'affretement'
+          nombrePalettes: article.nombrePalettes ? parseInt(article.nombrePalettes) : undefined
         })
 
         if (cotation.success && cotation.data) {
@@ -327,6 +243,46 @@ export default function CotationPage() {
     // Calculer le prix total avec options
     const pricing = calculateTotalPrice(prixTotalBase, options, poleId)
 
+    // Déterminer les options de livraison disponibles
+    const minimumPolePrice = getMinimumPriceForPole(poleId)
+    const isMessagerieOptionAvailable = prixTotalBase < minimumPolePrice
+    
+    // Si la messagerie est disponible, calculer aussi le prix en messagerie
+    let prixMessagerieTotal = null
+    if (isMessagerieOptionAvailable) {
+      let resultatsMessagerieArticles: any[] = []
+      
+      articles.forEach((article, index) => {
+        if (article.poids && article.longueur && article.largeur && article.hauteur) {
+          const cotationMessagerie = calculateCotation({
+            poleId,
+            postalCodeDestination: codePostal,
+            weight: parseFloat(article.poids),
+            dimensions: {
+              longueur: parseFloat(article.longueur),
+              largeur: parseFloat(article.largeur),
+              hauteur: parseFloat(article.hauteur)
+            },
+            options: {
+              hayon: false,
+              attente: 0,
+              matieresDangereuses: false,
+              valeurMarchandise: 0
+            },
+            forceType: 'messagerie'
+          })
+          
+          if (cotationMessagerie.success && cotationMessagerie.data) {
+            resultatsMessagerieArticles.push(cotationMessagerie.data)
+          }
+        }
+      })
+      
+      if (resultatsMessagerieArticles.length > 0) {
+        prixMessagerieTotal = resultatsMessagerieArticles.reduce((sum, r) => sum + r.pricing.basePrice, 0)
+      }
+    }
+
     setResultat({
       articles: resultatsArticles,
       pricing,
@@ -337,7 +293,24 @@ export default function CotationPage() {
       zone: resultatsArticles[0].zone,
       details: resultatsArticles[0].details,
       trajet: `${formData.villeDepart} → ${formData.villeArrivee}`,
-      pole: poleSelected
+      pole: poleSelected,
+      optionsLivraison: {
+        messagerie: {
+          disponible: isMessagerieOptionAvailable,
+          prix: prixMessagerieTotal,
+          message: isMessagerieOptionAvailable 
+            ? `Prix affrètement (${prixTotalBase}€) < ${minimumPolePrice}€`
+            : `Prix affrètement (${prixTotalBase}€) ≥ ${minimumPolePrice}€`
+        },
+        affretement: {
+          disponible: true,
+          prix: prixTotalBase
+        },
+        express: {
+          disponible: false,
+          message: 'Disponible prochainement'
+        }
+      }
     })
     
     setShowResult(true)
@@ -522,78 +495,6 @@ export default function CotationPage() {
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Type de livraison */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-primary" />
-                  Type de livraison
-                </h3>
-                
-                <div className="grid grid-cols-1 gap-3">
-                  <label className={`flex items-center cursor-pointer p-4 rounded-lg border-2 transition-all ${
-                    !isMessagerieAvailable ? 'opacity-50 cursor-not-allowed' : ''
-                  } ${
-                    typeLivraison === 'messagerie' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="typeLivraison"
-                      value="messagerie"
-                      checked={typeLivraison === 'messagerie'}
-                      onChange={(e) => setTypeLivraison(e.target.value as 'messagerie')}
-                      className="mr-3"
-                      disabled={!isMessagerieAvailable}
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">Messagerie</div>
-                      <div className="text-sm text-gray-600">
-                        {isMessagerieAvailable 
-                          ? `Disponible - Prix affrètement: ${prixAffretement}€ < ${minimumPrice}€`
-                          : prixAffretement !== null && minimumPrice !== null
-                            ? `Non disponible - Prix affrètement: ${prixAffretement}€ ≥ ${minimumPrice}€`
-                            : 'Remplissez le formulaire pour voir la disponibilité'
-                        }
-                      </div>
-                    </div>
-                  </label>
-                  
-                  <label className={`flex items-center cursor-pointer p-4 rounded-lg border-2 transition-all ${
-                    typeLivraison === 'affretement' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="typeLivraison"
-                      value="affretement"
-                      checked={typeLivraison === 'affretement'}
-                      onChange={(e) => setTypeLivraison(e.target.value as 'affretement')}
-                      className="mr-3"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">Affrètement</div>
-                      <div className="text-sm text-gray-600">Pour les palettes et colis volumineux</div>
-                    </div>
-                  </label>
-                  
-                  <label className={`flex items-center cursor-pointer p-4 rounded-lg border-2 transition-all opacity-50 ${
-                    typeLivraison === 'express' ? 'border-primary bg-primary/5' : 'border-gray-200'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="typeLivraison"
-                      value="express"
-                      checked={typeLivraison === 'express'}
-                      onChange={(e) => setTypeLivraison(e.target.value as 'express')}
-                      className="mr-3"
-                      disabled
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">Express</div>
-                      <div className="text-sm text-gray-600">Disponible prochainement</div>
-                    </div>
-                  </label>
-                </div>
               </div>
 
               {/* Articles */}
@@ -939,6 +840,71 @@ export default function CotationPage() {
                 )}
               </div>
             </div>
+            
+            {/* Options de livraison disponibles */}
+            {resultat.optionsLivraison && (
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Truck className="h-4 w-4" />
+                  Options de livraison disponibles
+                </h4>
+                <div className="grid grid-cols-1 gap-3">
+                  {/* Messagerie */}
+                  <div className={`p-4 rounded-lg border-2 ${
+                    resultat.optionsLivraison.messagerie.disponible 
+                      ? 'border-green-200 bg-green-50' 
+                      : 'border-gray-200 bg-gray-50 opacity-60'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h5 className="font-medium text-gray-900">Messagerie</h5>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {resultat.optionsLivraison.messagerie.message}
+                        </p>
+                      </div>
+                      {resultat.optionsLivraison.messagerie.disponible && resultat.optionsLivraison.messagerie.prix && (
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-green-600">
+                            {formatPrice(resultat.optionsLivraison.messagerie.prix)}
+                          </p>
+                          <p className="text-xs text-gray-500">HT</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Affrètement */}
+                  <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h5 className="font-medium text-gray-900">Affrètement</h5>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Pour les palettes et colis volumineux
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-blue-600">
+                          {formatPrice(resultat.optionsLivraison.affretement.prix)}
+                        </p>
+                        <p className="text-xs text-gray-500">HT</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Express */}
+                  <div className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-60">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h5 className="font-medium text-gray-900">Express</h5>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {resultat.optionsLivraison.express.message}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* Détail des articles */}
             {resultat.articles && resultat.articles.length > 0 && (
