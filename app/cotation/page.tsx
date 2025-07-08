@@ -303,6 +303,7 @@ export default function CotationPage() {
 
     // Calculer le prix Express
     let prixExpressTotal = null
+    let pricingExpress = null
     let vehiculeExpress = null
     let distanceAllerRetour = null
     
@@ -330,11 +331,20 @@ export default function CotationPage() {
         rendezVous: formData.rendezVousEnlevement || formData.rendezVousLivraison
       })
       prixExpressTotal = prixExpress.totalHT
+      pricingExpress = prixExpress
+    }
+    
+    // Calculer aussi le pricing pour la messagerie si disponible
+    let pricingMessagerie = null
+    if (isMessagerieOptionAvailable && prixMessagerieTotal) {
+      pricingMessagerie = calculateTotalPrice(prixMessagerieTotal, options, poleId)
     }
 
     setResultat({
       articles: resultatsArticles,
       pricing,
+      pricingMessagerie,
+      pricingExpress,
       transport: {
         weight: poidsTotal,
         nombreArticles: resultatsArticles.length
@@ -375,6 +385,21 @@ export default function CotationPage() {
       style: 'currency',
       currency: 'EUR'
     }).format(price)
+  }
+
+  // Fonction pour obtenir le prix selon l'option sélectionnée
+  const getSelectedPrice = () => {
+    if (!resultat || !selectedDelivery) return resultat?.pricing
+    
+    switch (selectedDelivery) {
+      case 'messagerie':
+        return resultat.pricingMessagerie || resultat.pricing
+      case 'express':
+        return resultat.pricingExpress || resultat.pricing
+      case 'affretement':
+      default:
+        return resultat.pricing
+    }
   }
 
   return (
@@ -1127,15 +1152,18 @@ export default function CotationPage() {
               <div className="bg-primary/5 rounded-lg p-6">
                 <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <Euro className="h-4 w-4" />
-                  Détail du tarif
+                  Détail du tarif {selectedDelivery && `(${
+                    selectedDelivery === 'messagerie' ? 'Messagerie' :
+                    selectedDelivery === 'express' ? 'Express' : 'Affrètement'
+                  })`}
                 </h4>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tarif de base</span>
-                    <span className="font-medium">{formatPrice(resultat.pricing.basePrice)}</span>
+                    <span className="font-medium">{formatPrice(getSelectedPrice()?.basePrice || 0)}</span>
                   </div>
                   
-                  {Object.entries(resultat.pricing.supplements).map(([key, value]) => (
+                  {Object.entries(getSelectedPrice()?.supplements || {}).map(([key, value]) => (
                     <div key={key} className="flex justify-between">
                       <span className="text-gray-600">
                         {key === 'hayon' && 'Forfait hayon'}
@@ -1154,7 +1182,15 @@ export default function CotationPage() {
                   <div className="pt-3 border-t border-gray-300">
                     <div className="flex justify-between">
                       <span className="text-lg font-semibold">Total HT</span>
-                      <span className="text-lg font-bold text-primary">{formatPrice(resultat.pricing.totalHT)}</span>
+                      <span className="text-lg font-bold text-primary">{formatPrice(getSelectedPrice()?.totalHT || 0)}</span>
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-sm text-gray-600">TVA (20%)</span>
+                      <span className="text-sm font-medium">{formatPrice(getSelectedPrice()?.tva || 0)}</span>
+                    </div>
+                    <div className="flex justify-between mt-2 pt-2 border-t border-gray-300">
+                      <span className="text-lg font-semibold">Total TTC</span>
+                      <span className="text-lg font-bold text-green-600">{formatPrice(getSelectedPrice()?.totalTTC || 0)}</span>
                     </div>
                   </div>
                 </div>
