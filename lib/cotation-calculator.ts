@@ -115,6 +115,7 @@ export function calculateCotation(input: CotationInput): CotationResult {
     let quantity: number;
     let weightForCalculation: number = input.weight;
     let calculAffrètement: any = undefined;
+    let estimation: any = undefined;
 
     console.log('Input reçu:', {
       weight: input.weight,
@@ -141,7 +142,6 @@ export function calculateCotation(input: CotationInput): CotationResult {
     } else {
       // Sinon, traiter comme palette/affrètement
     console.log('Estimation des palettes...');
-    let estimation;
     try {
       estimation = estimatePalettes(input.dimensions, input.weight);
       console.log('Estimation:', estimation);
@@ -153,8 +153,12 @@ export function calculateCotation(input: CotationInput): CotationResult {
       };
     }
     
+    console.log('Après estimation, vérification des conditions...');
+    console.log('nombrePalettes:', input.nombrePalettes, 'type:', typeof input.nombrePalettes);
+    
     // Si nombre de palettes fourni par l'utilisateur, l'utiliser
     if (input.nombrePalettes && input.nombrePalettes > 0) {
+      console.log('Utilisation du nombre de palettes fourni par l\'utilisateur');
       // Déterminer le type de palette basé sur les dimensions
       const longueurM = input.dimensions.longueur / 100;
       const largeurM = input.dimensions.largeur / 100;
@@ -178,10 +182,12 @@ export function calculateCotation(input: CotationInput): CotationResult {
         quantity = paliers.find(p => p >= metresEstimes) || 13.2;
       }
     } else if (input.typeTransport && input.quantity) {
+      console.log('Utilisation de l\'estimation manuelle fournie');
       // Si estimation manuelle fournie, l'utiliser
       typeTransport = input.typeTransport;
       quantity = input.quantity;
     } else {
+      console.log('Utilisation de l\'estimation automatique');
       // Sinon, utiliser l'estimation automatique
       if (estimation.type === 'metrePlancher') {
         // Utilisation de la formule d'affrètement pour dimensions non standard
@@ -200,7 +206,19 @@ export function calculateCotation(input: CotationInput): CotationResult {
         quantity = estimation.nombre;
       }
     }
+    console.log('Fin du traitement des conditions, typeTransport:', typeTransport, 'quantity:', quantity);
     } // Fermeture du else pour forceType
+    
+    // Vérifier que typeTransport et quantity sont bien définis
+    if (!typeTransport || !quantity) {
+      console.error('Variables non définies:', { typeTransport, quantity });
+      return {
+        success: false,
+        error: 'Erreur lors de la détermination du type de transport'
+      };
+    }
+    
+    console.log('Avant vérification des limites - typeTransport:', typeTransport, 'quantity:', quantity);
     
     // Vérifier les limites pour les palettes
     if (typeTransport === 'palette80x120' && (quantity < 1 || quantity > 33)) {
@@ -268,7 +286,7 @@ export function calculateCotation(input: CotationInput): CotationResult {
       const poidsMaxPalette = 750; // kg par palette
       
       // Si on a un poids volumétrique, l'utiliser
-      if (estimation.poidsVolumetrique && estimation.poidsFacture) {
+      if (estimation && estimation.poidsVolumetrique && estimation.poidsFacture) {
         weightForTarif = estimation.poidsFacture;
       }
       
@@ -381,7 +399,7 @@ export function calculateCotation(input: CotationInput): CotationResult {
           poidsVolumetrique: poidsVolumetrique,
           poidsFacture: poidsFacture,
           transportMode: typeTransport === 'messagerie' ? 'messagerie' : 'palette',
-          selectionReason: estimation?.baseSur || undefined,
+          selectionReason: estimation ? estimation.baseSur : undefined,
           calculAffrètement: calculAffrètement,
           calculVolumetrique: calculVolumetrique
         },
