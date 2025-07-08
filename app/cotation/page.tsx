@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { MapPin, Package, Calculator, FileText, Download, Printer, Truck, AlertCircle, Euro, Shield, Clock as ClockIcon, Plus, Trash2, Box } from "lucide-react"
 import dynamic from "next/dynamic"
-import { calculateCotation, estimatePalettes, determineTransportType } from "@/lib/cotation-calculator"
+import { calculateCotation, estimatePalettes, determineTransportType, getMinimumPriceForPole } from "@/lib/cotation-calculator"
 import { getDepartmentFromPostalCode } from "@/config/zones"
 import { calculateTotalPrice } from "@/config/tarifs-manager"
 
@@ -20,6 +20,7 @@ const poles: Record<string, [number, number]> = {
 
 export default function CotationPage() {
   const [typeTransport, setTypeTransport] = useState<'depuis-pole' | 'vers-pole'>('depuis-pole')
+  const [typeLivraison, setTypeLivraison] = useState<'affretement' | 'messagerie' | 'express'>('affretement')
   
   const [articles, setArticles] = useState([{
     id: 1,
@@ -129,6 +130,89 @@ export default function CotationPage() {
     return match ? match[0] : ''
   }
 
+  // État pour stocker le prix calculé en affrètement
+  const [prixAffretement, setPrixAffretement] = useState<number | null>(null)
+  
+  // Calculer le poids total
+  const poidsTotal = articles.reduce((sum, article) => {
+    if (article.poids) {
+      return sum + parseFloat(article.poids)
+    }
+    return sum
+  }, 0)
+
+  // Fonction pour calculer le prix en affrètement (pour vérifier si messagerie disponible)
+  const calculateAffretementPrice = React.useCallback(() => {
+    if (!formData.villeDepart && !formData.villeArrivee) return null
+    if (!articles.some(a => a.poids && a.longueur && a.largeur && a.hauteur)) return null
+    
+    const poleSelected = typeTransport === 'depuis-pole' ? formData.poleSelectionne || formData.villeDepart : formData.poleArriveeSelectionne || formData.villeArrivee
+    const poleId = poleSelected === 'Roissy CDG' ? 'roissy' : 
+                   poleSelected === 'Marseille' ? 'marseille' : 
+                   poleSelected === 'Lyon' ? 'lyon' : 
+                   poleSelected === 'Le Havre' ? 'le-havre' : ''
+    
+    if (!poleId) return null
+    
+    const codePostal = formData.codePostalDestination || extractPostalCode(
+      typeTransport === 'depuis-pole' ? formData.villeArrivee : formData.villeDepart
+    )
+    
+    if (!codePostal) return null
+    
+    let totalPrice = 0
+    
+    articles.forEach(article => {
+      if (article.poids && article.longueur && article.largeur && article.hauteur) {
+        const cotation = calculateCotation({
+          poleId,
+          postalCodeDestination: codePostal,
+          weight: parseFloat(article.poids),
+          dimensions: {
+            longueur: parseFloat(article.longueur),
+            largeur: parseFloat(article.largeur),
+            hauteur: parseFloat(article.hauteur)
+          },
+          options: {
+            hayon: false,
+            attente: 0,
+            matieresDangereuses: false,
+            valeurMarchandise: 0
+          },
+          nombrePalettes: article.nombrePalettes ? parseInt(article.nombrePalettes) : undefined,
+          forceType: 'affretement'
+        })
+        
+        if (cotation.success && cotation.data) {
+          totalPrice += cotation.data.pricing.basePrice
+        }
+      }
+    })
+    
+    return totalPrice > 0 ? totalPrice : null
+  }, [formData, articles, typeTransport])
+
+  // Calculer le prix affrètement quand les données changent
+  React.useEffect(() => {
+    const price = calculateAffretementPrice()
+    setPrixAffretement(price)
+  }, [calculateAffretementPrice])
+
+  // Déterminer si la messagerie est disponible
+  const minimumPrice = formData.poleSelectionne || formData.poleArriveeSelectionne ? 
+    getMinimumPriceForPole(
+      (formData.poleSelectionne || formData.poleArriveeSelectionne || '').toLowerCase().replace('roissy cdg', 'roissy').replace('le havre', 'le-havre').replace(/ /g, '-')
+    ) : null
+  
+  const isMessagerieAvailable = prixAffretement !== null && minimumPrice !== null && prixAffretement < minimumPrice
+
+  // Si la messagerie était sélectionnée mais n'est plus disponible, passer en affrètement
+  React.useEffect(() => {
+    if (typeLivraison === 'messagerie' && !isMessagerieAvailable) {
+      setTypeLivraison('affretement')
+    }
+  }, [isMessagerieAvailable, typeLivraison])
+
   const calculatePrice = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -203,7 +287,8 @@ export default function CotationPage() {
           weight,
           dimensions,
           options,
-          nombrePalettes: article.nombrePalettes ? parseInt(article.nombrePalettes) : undefined
+          nombrePalettes: article.nombrePalettes ? parseInt(article.nombrePalettes) : undefined,
+          forceType: typeLivraison === 'messagerie' ? 'messagerie' : 'affretement'
         })
 
         if (cotation.success && cotation.data) {
@@ -437,6 +522,78 @@ export default function CotationPage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Type de livraison */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-primary" />
+                  Type de livraison
+                </h3>
+                
+                <div className="grid grid-cols-1 gap-3">
+                  <label className={`flex items-center cursor-pointer p-4 rounded-lg border-2 transition-all ${
+                    !isMessagerieAvailable ? 'opacity-50 cursor-not-allowed' : ''
+                  } ${
+                    typeLivraison === 'messagerie' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="typeLivraison"
+                      value="messagerie"
+                      checked={typeLivraison === 'messagerie'}
+                      onChange={(e) => setTypeLivraison(e.target.value as 'messagerie')}
+                      className="mr-3"
+                      disabled={!isMessagerieAvailable}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">Messagerie</div>
+                      <div className="text-sm text-gray-600">
+                        {isMessagerieAvailable 
+                          ? `Disponible - Prix affrètement: ${prixAffretement}€ < ${minimumPrice}€`
+                          : prixAffretement !== null && minimumPrice !== null
+                            ? `Non disponible - Prix affrètement: ${prixAffretement}€ ≥ ${minimumPrice}€`
+                            : 'Remplissez le formulaire pour voir la disponibilité'
+                        }
+                      </div>
+                    </div>
+                  </label>
+                  
+                  <label className={`flex items-center cursor-pointer p-4 rounded-lg border-2 transition-all ${
+                    typeLivraison === 'affretement' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="typeLivraison"
+                      value="affretement"
+                      checked={typeLivraison === 'affretement'}
+                      onChange={(e) => setTypeLivraison(e.target.value as 'affretement')}
+                      className="mr-3"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">Affrètement</div>
+                      <div className="text-sm text-gray-600">Pour les palettes et colis volumineux</div>
+                    </div>
+                  </label>
+                  
+                  <label className={`flex items-center cursor-pointer p-4 rounded-lg border-2 transition-all opacity-50 ${
+                    typeLivraison === 'express' ? 'border-primary bg-primary/5' : 'border-gray-200'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="typeLivraison"
+                      value="express"
+                      checked={typeLivraison === 'express'}
+                      onChange={(e) => setTypeLivraison(e.target.value as 'express')}
+                      className="mr-3"
+                      disabled
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">Express</div>
+                      <div className="text-sm text-gray-600">Disponible prochainement</div>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               {/* Articles */}

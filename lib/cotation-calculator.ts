@@ -28,6 +28,7 @@ export interface CotationInput {
     manutention?: boolean; // Option spécifique Express RP
   };
   nombrePalettes?: number; // Nombre de palettes fourni par l'utilisateur (optionnel)
+  forceType?: 'messagerie' | 'affretement'; // Forcer le type de transport
 }
 
 export interface CotationResult {
@@ -100,7 +101,13 @@ export function calculateCotation(input: CotationInput): CotationResult {
     let weightForCalculation: number = input.weight;
     let calculAffrètement: any = undefined;
 
-    // 2. Toujours traiter comme palette/affrètement
+    // 2. Si forceType est défini, l'utiliser
+    if (input.forceType === 'messagerie') {
+      // Forcer le mode messagerie
+      typeTransport = 'messagerie';
+      quantity = 1;
+    } else {
+      // Sinon, traiter comme palette/affrètement
     const estimation = estimatePalettes(input.dimensions, input.weight);
     
     // Si nombre de palettes fourni par l'utilisateur, l'utiliser
@@ -150,6 +157,7 @@ export function calculateCotation(input: CotationInput): CotationResult {
         quantity = estimation.nombre;
       }
     }
+    } // Fermeture du else pour forceType
     
     // Vérifier les limites pour les palettes
     if (typeTransport === 'palette80x120' && (quantity < 1 || quantity > 33)) {
@@ -468,6 +476,22 @@ function getDefaultPostalCodeForPole(poleId: string): string {
       return '76600';
     default:
       return '95700'; // Par défaut Roissy
+  }
+}
+
+// Fonction pour obtenir le prix minimum de la grille tarifaire d'un pôle
+export function getMinimumPriceForPole(poleId: string): number {
+  switch (poleId) {
+    case 'roissy':
+      return 91; // Prix minimum pour Roissy
+    case 'marseille':
+      return 91; // Prix minimum pour Marseille (R1, 1 palette)
+    case 'lyon':
+      return 91; // Prix minimum pour Lyon (R1, 1 palette)
+    case 'le-havre':
+      return 91; // Prix minimum pour Le Havre (R1, 1 palette)
+    default:
+      return 91;
   }
 }
 
