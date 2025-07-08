@@ -37,7 +37,7 @@ export const vehiculesExpress: VehiculeExpress[] = [
     nom: 'Fourgon',
     coefficient: 0.7,
     capacite: {
-      poidsMax: 800,
+      poidsMax: 1200,
       volumeMax: 8,
       longueurMax: 240,  // Pour 3 palettes en longueur (80x3) ou 2x120
       largeurMax: 120,
@@ -51,7 +51,7 @@ export const vehiculesExpress: VehiculeExpress[] = [
     nom: 'Grand Volume 20m³',
     coefficient: 0.9,
     capacite: {
-      poidsMax: 1200,
+      poidsMax: 800,
       volumeMax: 20,
       longueurMax: 560,  // Pour 7 palettes
       largeurMax: 120,
