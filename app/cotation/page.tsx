@@ -28,7 +28,8 @@ export default function CotationPage() {
     longueur: '',
     largeur: '',
     hauteur: '',
-    nombrePalettes: ''
+    nombrePalettes: '',
+    gerbable: true  // Par défaut gerbable
   }])
 
   const [formData, setFormData] = useState({
@@ -65,7 +66,8 @@ export default function CotationPage() {
       longueur: '',
       largeur: '',
       hauteur: '',
-      nombrePalettes: ''
+      nombrePalettes: '',
+      gerbable: true
     }])
   }
 
@@ -77,7 +79,10 @@ export default function CotationPage() {
 
   const handleArticleChange = (id: number, field: string, value: string) => {
     setArticles(articles.map(article => 
-      article.id === id ? { ...article, [field]: value } : article
+      article.id === id ? { 
+        ...article, 
+        [field]: field === 'gerbable' ? (value === 'true') : value 
+      } : article
     ))
   }
 
@@ -213,7 +218,8 @@ export default function CotationPage() {
             article: {
               id: article.id,
               type: article.type,
-              numero: index + 1
+              numero: index + 1,
+              gerbable: article.gerbable
             }
           })
         }
@@ -616,19 +622,34 @@ export default function CotationPage() {
                       </div>
                       
                       {article.type === 'palette' && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre de palettes (optionnel)
-                          </label>
-                          <input
-                            type="number"
-                            value={article.nombrePalettes}
-                            onChange={(e) => handleArticleChange(article.id, 'nombrePalettes', e.target.value)}
-                            min="0"
-                            step="1"
-                            placeholder="Laissez vide pour calcul automatique"
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                          />
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Nombre de palettes (optionnel)
+                            </label>
+                            <input
+                              type="number"
+                              value={article.nombrePalettes}
+                              onChange={(e) => handleArticleChange(article.id, 'nombrePalettes', e.target.value)}
+                              min="0"
+                              step="1"
+                              placeholder="Laissez vide pour calcul automatique"
+                              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Gerbable
+                            </label>
+                            <select
+                              value={article.gerbable ? 'oui' : 'non'}
+                              onChange={(e) => handleArticleChange(article.id, 'gerbable', e.target.value === 'oui' ? 'true' : 'false')}
+                              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            >
+                              <option value="oui">Oui</option>
+                              <option value="non">Non</option>
+                            </select>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -934,7 +955,7 @@ export default function CotationPage() {
                           <span className="ml-2 font-medium">{item.transport.weight} kg</span>
                         </div>
                         {item.transport.quantity && (
-                          <div className="col-span-2">
+                          <div>
                             <span className="text-gray-600">Quantité:</span>
                             <span className="ml-2 font-medium">
                               {item.transport.type === 'Mètre de plancher' 
@@ -942,6 +963,12 @@ export default function CotationPage() {
                                 : `${item.transport.quantity} palette${item.transport.quantity > 1 ? 's' : ''}`
                               }
                             </span>
+                          </div>
+                        )}
+                        {item.article.type === 'palette' && (
+                          <div>
+                            <span className="text-gray-600">Gerbable:</span>
+                            <span className="ml-2 font-medium">{item.article.gerbable ? 'Oui' : 'Non'}</span>
                           </div>
                         )}
                       </div>
