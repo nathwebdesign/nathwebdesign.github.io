@@ -7,6 +7,7 @@ import dynamic from "next/dynamic"
 import { calculateCotation, estimatePalettes, determineTransportType, getMinimumPriceForPole } from "@/lib/cotation-calculator"
 import { getDepartmentFromPostalCode } from "@/config/zones"
 import { calculateTotalPrice } from "@/config/tarifs-manager"
+import { selectExpressVehicle, calculateExpressPrice, estimateDistance } from "@/config/tarifs-express"
 
 const Map = dynamic(() => import("@/components/cotation/map"), { ssr: false })
 const AddressAutocomplete = dynamic(() => import("@/components/cotation/address-autocomplete-free"), { ssr: false })
@@ -299,6 +300,33 @@ export default function CotationPage() {
       }
     }
 
+    // Calculer le prix Express
+    let prixExpressTotal = null
+    let vehiculeExpress = null
+    let distanceAllerRetour = null
+    
+    // Sélectionner le véhicule approprié en fonction du poids total et des dimensions max
+    let dimensionsMax = { longueur: 0, largeur: 0, hauteur: 0 }
+    articles.forEach(article => {
+      if (article.longueur && article.largeur && article.hauteur) {
+        dimensionsMax.longueur = Math.max(dimensionsMax.longueur, parseFloat(article.longueur))
+        dimensionsMax.largeur = Math.max(dimensionsMax.largeur, parseFloat(article.largeur))
+        dimensionsMax.hauteur = Math.max(dimensionsMax.hauteur, parseFloat(article.hauteur))
+      }
+    })
+    
+    vehiculeExpress = selectExpressVehicle(poidsTotal, dimensionsMax)
+    
+    if (vehiculeExpress && coordinates.depart && coordinates.arrivee) {
+      distanceAllerRetour = estimateDistance(coordinates.depart, coordinates.arrivee)
+      const prixExpress = calculateExpressPrice(distanceAllerRetour, vehiculeExpress, {
+        hayon: formData.hayonEnlevement || formData.hayonLivraison,
+        matieresDangereuses: formData.matieresDangereuses,
+        rendezVous: formData.rendezVousEnlevement || formData.rendezVousLivraison
+      })
+      prixExpressTotal = prixExpress.totalHT
+    }
+
     setResultat({
       articles: resultatsArticles,
       pricing,
@@ -323,8 +351,13 @@ export default function CotationPage() {
           prix: prixTotalBase
         },
         express: {
-          disponible: false,
-          message: 'Disponible prochainement'
+          disponible: vehiculeExpress !== null,
+          prix: prixExpressTotal,
+          vehicule: vehiculeExpress?.nom,
+          distance: distanceAllerRetour,
+          message: vehiculeExpress 
+            ? `${vehiculeExpress.nom} - ${distanceAllerRetour} km A/R × ${vehiculeExpress.coefficient}€/km`
+            : 'Dimensions ou poids trop importants pour l\'Express'
         }
       }
     })
@@ -923,7 +956,11 @@ export default function CotationPage() {
                   </div>
                   
                   {/* Express */}
-                  <div className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-60">
+                  <div className={`p-4 rounded-lg border-2 ${
+                    resultat.optionsLivraison.express.disponible 
+                      ? 'border-orange-200 bg-orange-50' 
+                      : 'border-gray-200 bg-gray-50 opacity-60'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-gray-900">Express</h5>
@@ -931,6 +968,14 @@ export default function CotationPage() {
                           {resultat.optionsLivraison.express.message}
                         </p>
                       </div>
+                      {resultat.optionsLivraison.express.disponible && resultat.optionsLivraison.express.prix && (
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-orange-600">
+                            {formatPrice(resultat.optionsLivraison.express.prix)}
+                          </p>
+                          <p className="text-xs text-gray-500">HT</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
