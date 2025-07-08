@@ -1,7 +1,6 @@
 // Gestionnaire centralisé des tarifs pour tous les pôles
 
 import { 
-  tarifsMessagerie as tarifsMessagerieRoissy,
   supplementOptions
 } from './tarifs';
 
@@ -31,6 +30,12 @@ import {
   calculateTotalPriceLyon
 } from './tarifs-lyon';
 
+import {
+  calculateMessageriePrice,
+  getZoneMessagerieByDepartment,
+  optionsMessagerie
+} from './tarifs-messagerie';
+
 export interface TarifPalette {
   quantity: number;
   prices: Record<string, number>;
@@ -56,29 +61,25 @@ export function getTarifsByPole(poleId: string) {
         tarifs80x120: null, // Utiliser la nouvelle structure
         tarifs100x120: null, // Utiliser la nouvelle structure
         tarifsMetrePlancher: null, // Utiliser la nouvelle structure
-        tarifsMessagerie: tarifsMessagerieRoissy,
         tarifsRoissy: tarifsRoissy
       };
     case 'marseille':
       return {
         tarifs80x120: tarifs80x120Marseille,
         tarifs100x120: tarifs100x120Marseille,
-        tarifsMetrePlancher: tarifsMetrePlancherMarseille,
-        tarifsMessagerie: tarifsMessagerieRoissy // Toujours utiliser les zones Roissy pour la messagerie
+        tarifsMetrePlancher: tarifsMetrePlancherMarseille
       };
     case 'le-havre':
       return {
         tarifs80x120: tarifs80x120LeHavre,
         tarifs100x120: tarifs100x120LeHavre,
-        tarifsMetrePlancher: tarifsMetrePlancherLeHavre,
-        tarifsMessagerie: tarifsMessagerieRoissy // Toujours utiliser les zones Roissy pour la messagerie
+        tarifsMetrePlancher: tarifsMetrePlancherLeHavre
       };
     case 'lyon':
       return {
         tarifs80x120: tarifs80x120Lyon,
         tarifs100x120: tarifs100x120Lyon,
-        tarifsMetrePlancher: tarifsMetrePlancherLyon,
-        tarifsMessagerie: tarifsMessagerieRoissy // Toujours utiliser les zones Roissy pour la messagerie
+        tarifsMetrePlancher: tarifsMetrePlancherLyon
       };
     default:
       return null;
@@ -97,16 +98,15 @@ export function calculateTarifByPole(
   if (poleId === 'roissy' && type !== 'messagerie') {
     return getTarifRoissy(zoneCode, type, quantity) || null;
   }
+  // Pour la messagerie - utiliser directement la nouvelle fonction
+  if (type === 'messagerie' && weight !== undefined) {
+    // La grille messagerie utilise toujours les zones R1-R11
+    const price = calculateMessageriePrice(weight, zoneCode);
+    return price || null;
+  }
+
   const tarifs = getTarifsByPole(poleId);
   if (!tarifs) return null;
-
-  // Pour la messagerie, toujours utiliser les zones Roissy
-  let actualZoneCode = zoneCode;
-  if (type === 'messagerie' && poleId !== 'roissy') {
-    // Convertir la zone du pôle actuel vers la zone Roissy correspondante
-    // Les zones R1-R11, MONACO et CORSE restent les mêmes
-    actualZoneCode = zoneCode;
-  }
 
   // Pour Roissy, on utilise tarifsRoissy qui est structuré différemment
   if (poleId === 'roissy' && type !== 'messagerie' && tarifs.tarifsRoissy) {
@@ -127,9 +127,6 @@ export function calculateTarifByPole(
     case 'metrePlancher':
       tarifsList = tarifs.tarifsMetrePlancher;
       break;
-    case 'messagerie':
-      tarifsList = tarifs.tarifsMessagerie;
-      break;
     default:
       return null;
   }
@@ -137,7 +134,7 @@ export function calculateTarifByPole(
   // Pour les palettes
   if (type === 'palette80x120' || type === 'palette100x120') {
     const tarifLine = tarifsList.find(t => t.quantity === quantity);
-    return tarifLine ? tarifLine.prices[actualZoneCode] || null : null;
+    return tarifLine ? tarifLine.prices[zoneCode] || null : null;
   }
 
   // Pour le mètre de plancher
@@ -145,28 +142,7 @@ export function calculateTarifByPole(
     const tarifLine = tarifsList.find(t => 
       t.meters === quantity && (!weight || weight <= t.maxWeight)
     );
-    return tarifLine ? tarifLine.prices[actualZoneCode] || null : null;
-  }
-
-  // Pour la messagerie
-  if (type === 'messagerie' && weight !== undefined) {
-    // Pour les colis > 100kg, on utilise le tarif 100-199kg
-    if (weight >= 100) {
-      const tarifLine = tarifsList.find(t => t.minWeight === 100 && t.maxWeight === 199);
-      if (tarifLine && tarifLine.prices[actualZoneCode]) {
-        const basePrice = tarifLine.prices[actualZoneCode];
-        // Prix = (tarif 100-199kg / poids) × poids, arrondi à la dizaine supérieure
-        const calculatedPrice = basePrice;
-        return Math.ceil(calculatedPrice / 10) * 10;
-      }
-      return null;
-    }
-    
-    // Pour les colis < 100kg, on trouve la tranche de poids appropriée
-    const tarifLine = tarifsList.find(t => 
-      weight >= t.minWeight && weight <= t.maxWeight
-    );
-    return tarifLine ? tarifLine.prices[actualZoneCode] || null : null;
+    return tarifLine ? tarifLine.prices[zoneCode] || null : null;
   }
 
   return null;
@@ -209,16 +185,16 @@ export function calculateTotalPrice(
     totalHT += supplements.hayon;
   }
 
-  // Hayon à l'enlèvement
+  // Hayon à l'enlèvement (30€ pour messagerie selon la grille)
   if (options.hayonEnlevement) {
-    const hayonPrice = poleId === 'roissy' ? optionsTarifairesRoissy.forfaitHayon : supplementOptions.hayon;
+    const hayonPrice = poleId === 'roissy' ? optionsTarifairesRoissy.forfaitHayon : optionsMessagerie.hayon;
     supplements.hayonEnlevement = hayonPrice;
     totalHT += supplements.hayonEnlevement;
   }
 
-  // Hayon à la livraison
+  // Hayon à la livraison (30€ pour messagerie selon la grille)
   if (options.hayonLivraison) {
-    const hayonPrice = poleId === 'roissy' ? optionsTarifairesRoissy.forfaitHayon : supplementOptions.hayon;
+    const hayonPrice = poleId === 'roissy' ? optionsTarifairesRoissy.forfaitHayon : optionsMessagerie.hayon;
     supplements.hayonLivraison = hayonPrice;
     totalHT += supplements.hayonLivraison;
   }
@@ -251,15 +227,16 @@ export function calculateTotalPrice(
     totalHT += supplements.matieresDangereuses;
   }
 
-  // Assurance
+  // Assurance (0.5% de la valeur avec minimum 30€ selon la grille messagerie)
   if (options.valeurMarchandise && options.valeurMarchandise > 0) {
     // Utiliser les tarifs spécifiques de Roissy si applicable
     if (poleId === 'roissy') {
       const assuranceCalculee = options.valeurMarchandise * optionsTarifairesRoissy.assurance.taux;
       supplements.assurance = Math.max(assuranceCalculee, optionsTarifairesRoissy.assurance.minimum);
     } else {
-      const assuranceCalculee = options.valeurMarchandise * supplementOptions.assuranceTaux;
-      supplements.assurance = Math.max(assuranceCalculee, supplementOptions.assuranceMinimum);
+      // Utiliser les tarifs messagerie (0.5% avec minimum 30€)
+      const assuranceCalculee = options.valeurMarchandise * optionsMessagerie.assurance.taux;
+      supplements.assurance = Math.max(assuranceCalculee, optionsMessagerie.assurance.minimum);
     }
     totalHT += supplements.assurance;
   }
